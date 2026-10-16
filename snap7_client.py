@@ -14,6 +14,7 @@ import sys
 from typing import Final
 
 import snap7
+
 from snap7.util import get_bool, get_real, get_int, set_bool, set_real, set_int
 
 DEFAULT_IP: Final = "192.168.0.1"
