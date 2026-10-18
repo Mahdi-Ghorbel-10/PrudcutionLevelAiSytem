@@ -20,14 +20,15 @@ Three roles, each with its own worktree:
 Each agent has its own worktree, so neither one edits the other's files. The user keeps the main checkout on `Dev`.
 
 ```
-PrudcutionLevelAiSytem/   main checkout, branch Dev (user merges and runs /quiz here)
-../rag-claude/            builder worktree (Claude Code)
-../rag-zed/               reviewer worktree (Zed)
+rag-workspace/
+├── main/          main checkout, branch Dev (user merges and runs /quiz here)
+├── rag-claude/    builder worktree (Claude Code)
+└── rag-zed/       reviewer worktree (Zed)
 ```
 
 Set up once:
 ```
-cd PrudcutionLevelAiSytem
+cd rag-workspace/main
 git worktree add --detach ../rag-claude origin/Dev
 git worktree add --detach ../rag-zed origin/Dev
 cp -r models ../rag-claude/ && cp -r models ../rag-zed/   # gitignored, not in worktrees
