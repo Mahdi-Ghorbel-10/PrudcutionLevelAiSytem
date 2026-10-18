@@ -96,7 +96,7 @@ Reference repos:
 ## Step 11–13 — Gateway, observability, CD
 | Practice | Source | Ours |
 |---|---|---|
-| Lint → test → build → deploy on main | [FD] ruff, pytest, Docker build, deploy to Cloud Run | Same order, plus Trivy scan and eval gate; deploy via self-hosted runner instead of Cloud Run |
+| Lint → test → build → deploy on Dev | [FD] ruff, pytest, Docker build, deploy to Cloud Run | Same order, plus Trivy scan and eval gate; deploy via self-hosted runner instead of Cloud Run |
 | Secrets only in CI secrets and `.env`, documented | [FD] lists required GitHub secrets in README | README table of every secret and where it lives; `.env.example` has every key with no values |
 | Gateway config shipped with the project | [VS] `nginx/nginx.conf` as reference for prod | Baked into `rag-gateway` image |
 | Version metadata in the build | [VS] generator version and timestamp in `pyproject.toml` | Image labels (`org.opencontainers.image.version`, `revision` = git SHA); `/health` returns version and SHA |

@@ -60,10 +60,10 @@ Volumes: `chroma_data`, `phoenix_data`, `pg_data`, `redis_data`, `grafana_data`;
 ### System
 ```
 Browser ─► Cloudflare Tunnel (HTTPS, public URL) ─► rag-gateway (Nginx)
-   ├─ /                 ─► rag-web (Next.js)
-   ├─ /api/*            ─► rag-api (FastAPI)            rate limit 20 r/s
-   ├─ /api/query/stream ─► rag-api (SSE, buffering off) rate limit 2 r/s
-   └─ /api/auth/login   ─► rag-api                      rate limit 5 r/min
+   ├─ /                    ─► rag-web (Next.js)
+   ├─ /api/v1/*            ─► rag-api (FastAPI)            rate limit 20 r/s
+   ├─ /api/v1/query/stream ─► rag-api (SSE, buffering off) rate limit 2 r/s
+   └─ /api/v1/auth/login   ─► rag-api                      rate limit 5 r/min
 rag-api ─► llm (llama-server) · Chroma (embedded, volume) · Postgres · Redis · Phoenix (OTel)
 rag-api ─► Redis queue ─► rag-worker (same image) ─► IngestionPipeline ─► Chroma + BM25 rebuild
 Prometheus ◄─ /metrics (api, worker, nginx exporter) ─► Grafana
@@ -269,10 +269,10 @@ Goal: behave like a production team. For every scenario: run a **baseline**, obs
 
 ## Verification
 - `uv run pytest`: unit tests pass (RRF ordering, chunk IDs stay the same across runs, router fallback, retry loop stops at 2, cache key changes with `corpus_version`, role checks, ingest job idempotent on re-run).
-- `docker compose up -d` → all services healthy; `curl localhost/api/ready` through the gateway.
+- `docker compose up -d` → all services healthy; `curl localhost/api/v1/ready` through the gateway.
 - Web app: log in, upload a doc, job goes `queued → running → done`, ask a doc-specific question, tokens stream, citations point to the uploaded file, a greeting takes the `direct` route, a follow-up question uses chat history.
 - Asking the same question twice: second response is a cache hit (visible in metrics and response header `X-Cache: HIT`); after a new ingest it's a miss again.
-- Hammering `/api/query/stream` returns 429 after the burst.
+- Hammering `/api/v1/query/stream` returns 429 after the burst.
 - Phoenix at `localhost:6006` shows one trace per query with node spans; the `trace_id` returned to the UI matches.
 - Grafana at `localhost:3001` shows request rate, p95 latency, cache hit rate.
 - `make eval-gate` passes thresholds; `docker compose run --rm api rag eval` writes `evals/results/<timestamp>.csv`.
