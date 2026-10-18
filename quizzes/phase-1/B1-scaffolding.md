@@ -33,43 +33,43 @@ Mix: multiple choice, "what breaks if", and "why was this chosen". Each question
 
 - [ ] A. Otherwise pytest cannot find `config.yaml`.
 - [ ] B. It makes the tests faster by skipping YAML parsing.
-- [ ] C. So a developer's real `.env` cannot change the test results.
-- [ ] D. So `.env` is always ignored in production.
+- [ ] C. So `.env` is always ignored in production.
+- [ ] D. So a developer's real `.env` cannot change the test results.
 
 ### Q5. The Dockerfile pins `server-b11718` and forbids `:latest`. Why?
 
 - [ ] A. A rebuild next month should give the same server, while `latest` can change under the same name.
 - [ ] B. Docker Hub does not allow `latest` tags for public images.
 - [ ] C. Pinned tags produce smaller images.
-- [ ] D. llama.cpp accepts the `--jinja` flag only in numbered builds.
+- [ ] D. Docker refuses to build a `FROM` line that uses `latest`.
 
 ### Q6. `scripts/export_model.sh` copies the Ollama blob instead of downloading the model again. What does this buy?
 
 - [ ] A. The copy is a different, smaller model file than the one Ollama holds.
-- [ ] B. It avoids a second download, and the sha256 check proves the copy is byte-identical.
-- [ ] C. Ollama blobs are encrypted, so only a copy can be read by llama.cpp.
+- [ ] B. Ollama blobs are encrypted, so only a copy can be read by llama.cpp.
+- [ ] C. It avoids a second download, and the sha256 check proves the copy matches the blob's hash.
 - [ ] D. The Docker build can then skip the `COPY` step.
 
-### Q7. The sha256 check in `export_model.sh` fails. What is the state of `models/` afterwards, and what should happen to the build?
+### Q7. The sha256 check in `export_model.sh` fails. What state is `models/` in afterwards, and what should happen to the build?
 
 - [ ] A. The script deletes the copy, and the build still works from the Ollama blob.
-- [ ] B. The script exits with an error, the bad copy stays in `models/`, and the build must not use it.
+- [ ] B. The script exits with an error and leaves the bad copy in `models/`. A build that runs after it must not use that file.
 - [ ] C. The script retries the copy until the hashes match.
 - [ ] D. The script prints a warning and exits 0, so the build continues.
 
-### Q8. `docker-compose.yml` publishes the port as `127.0.0.1:8081:8080`, but the server inside the container binds to `0.0.0.0`. Why both?
+### Q8. `docker-compose.yml` publishes the port as `127.0.0.1:…:8080`, and the `CMD` makes the server bind to `0.0.0.0`. Why both?
 
-- [ ] A. `0.0.0.0` and `127.0.0.1` are the same, so the two lines are redundant.
-- [ ] B. Inside the container, `0.0.0.0` lets Docker's port forwarding reach the server. On the host, `127.0.0.1` keeps it off the local network.
-- [ ] C. Compose requires `0.0.0.0` in the `CMD`, and `127.0.0.1` is only for Phoenix.
+- [ ] A. `0.0.0.0` and `127.0.0.1` are the same address, so the two settings are redundant.
+- [ ] B. Compose requires `0.0.0.0` in every `CMD`, and `127.0.0.1` is only for Phoenix.
+- [ ] C. Inside the container, the server listens on all interfaces so Docker's port forwarding can reach it. On the host, the published port is bound to loopback, so the LAN cannot reach it.
 - [ ] D. `0.0.0.0` exposes the host to the internet, so compose must override it.
 
-### Q9. Someone removes `--host 0.0.0.0` from the `CMD`. What breaks?
+### Q9. `.env.example` says the local llm container is at `http://localhost:8080/v1`. You copy that value into `.env`, start the stack with default settings, and run the app on the host. What happens?
 
-- [ ] A. `curl localhost:8081` from the host fails, while the in-container healthcheck still passes.
-- [ ] B. The model fails to load because it cannot read the GGUF file.
-- [ ] C. The healthcheck fails, and compose refuses to start the stack.
-- [ ] D. Nothing changes, because llama.cpp already listens on all interfaces by default.
+- [ ] A. The request reaches the llm container, because the container listens on 8080 and the host port does not matter.
+- [ ] B. The app refuses to start, because `.env` must match the compose file.
+- [ ] C. Compose rewrites the URL in `.env` to 8081 while the stack is up.
+- [ ] D. The request does not reach the llm container. The stack publishes it on host port 8081 by default, and host port 8080 belongs to another service.
 
 ### Q10. The host port is `${LLM_HOST_PORT:-8081}`, not `8080`. Why?
 
@@ -81,6 +81,13 @@ Mix: multiple choice, "what breaks if", and "why was this chosen". Each question
 ### Q11. Why does gitleaks run as a pre-commit hook?
 
 - [ ] A. It formats the code before review.
-- [ ] B. A secret that reaches a commit stays in git history even after it is deleted, so it is cheaper to stop it before the commit.
-- [ ] C. GitHub requires it before any push to `Dev`.
-- [ ] D. It replaces the unit test job in CI.
+- [ ] B. GitHub requires it before any push to `Dev`.
+- [ ] C. It replaces the unit test job in CI.
+- [ ] D. A secret that reaches a commit stays in git history even after it is deleted, so it is cheaper to stop it before the commit.
+
+### Q12. CI runs `uv sync --locked`. What does the `--locked` flag guard against?
+
+- [ ] A. A pull request that changes `pyproject.toml` without updating `uv.lock` fails before the tests run.
+- [ ] B. CI upgrades every dependency to the newest release before testing.
+- [ ] C. CI ignores `uv.lock` and resolves versions fresh on each run.
+- [ ] D. CI runs gitleaks before the lint step.

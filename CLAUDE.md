@@ -24,5 +24,5 @@ Rules for every agent:
 - Record any deviation from the plan in the Decisions log of `PLAN.md`. Don't change the design silently.
 - Commit and push on your own step branch. Never push to `Dev`, force-push, or merge a PR; the user merges.
 - Don't delete files or rewrite history unless the user asks in that conversation.
-- Tutor quizzes are created with `/quiz BN` after a merge. Don't read `quizzes/answers/`.
+- Tutor quizzes are created with `/quiz BN` after a merge. Only the `tutor` agent reads `quizzes/answers/`, and only to grade. Every other agent leaves that folder alone.
 - After code changes, run `graphify update .`.
