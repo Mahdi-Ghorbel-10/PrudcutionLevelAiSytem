@@ -59,8 +59,8 @@ Hand-set statuses:
 | `todo` | — | Not started |
 | `spec` | Builder | Spec drafted, waiting for the user's approval |
 | `doing` | Builder | Building on the step branch, after the spec is approved |
+| `merged` | User, when the PR merges | Merged into `Dev`, branch deleted. The quiz is tracked in `quiz_ready`. |
 | `blocked` | Anyone | Stuck. Reason in Notes. The user decides. |
-| `done` | User, after the merge | Merged into `Dev`, branch deleted |
 
 Derived from GitHub, not typed into the board:
 
@@ -71,7 +71,7 @@ Derived from GitHub, not typed into the board:
 | `approved` | PR review decision is "approved" | User merges |
 
 Rules:
-- Only one step is `doing` or in review at a time. A new step starts after the previous one is `done`, unless the user says otherwise.
+- Only one step is `doing` or in review at a time. A new step starts after the previous one is `merged`, unless the user says otherwise.
 - **Reviewer** is set when the PR opens: `zed`, `user`, or `claude-code`. The reviewer is never the builder. The user may review any step.
 - After a `changes-requested`, the builder pushes fixes to the same PR. The PR goes back to open, so it's `review` again.
 - Check PR state with `gh pr view <n> --json state,reviewDecision`.
@@ -106,9 +106,9 @@ Rules:
 ## After the merge (user)
 
 1. Merge the PR (squash). Delete the step branch.
-2. Set the step to `done` on the board.
-3. Run `/quiz BN` in the main checkout. The tutor writes the quiz files.
-4. Commit the quiz files to `Dev` yourself, then add `quiz: ready` to the step's Notes.
+2. Set the step's status to `merged` on the board.
+3. Run `/quiz BN` in the main checkout. The tutor writes the quiz files and sets `quiz_ready` to `true`.
+4. Commit the quiz files and the board change to `Dev` yourself.
 5. Start a tutor session with `claude --agent tutor` when you want to answer the quiz.
 
 ## Git workflow
@@ -126,26 +126,26 @@ Rules:
 
 ## Board
 
-| Step | Task | Status | Builder | Reviewer | PR | Notes |
-|---|---|---|---|---|---|---|
-| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | review | claude-code | zed | #1 | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). CI green on PR #1. quiz: ready. |
-| B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | todo | — | — | — | |
-| B3 | Hybrid retrieval, RRF, reranker, unit tests | todo | — | — | — | |
-| B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | |
-| B5 | Phoenix tracing | todo | — | — | — | |
-| B6 | FastAPI (`/health`, `/ready`, `/query`) + `api` image, `docker compose up` | todo | — | — | — | |
-| B7 | Eval: `rag eval` (Ragas), `rag eval-gate`, eval job in `ci.yml` | todo | — | — | — | |
-| B8 | Postgres + Alembic + auth | todo | — | — | — | |
-| B9 | Redis: async ingest worker, query cache, per-user budget, conversation memory | todo | — | — | — | |
-| B10 | Streaming `/query/stream` + Next.js frontend + `web` image | todo | — | — | — | |
-| B11 | Nginx gateway image, rate limits, Cloudflare Tunnel | todo | — | — | — | |
-| B12 | Observability: Prometheus, JSON logs, Grafana, k6 load test | todo | — | — | — | |
-| B13 | VM + CD: cloud-init, runner, `release.yml`, `deploy.yml` | todo | — | — | — | Needs user confirmation before the first Docker Hub push |
-| B14 | README with architecture and trade-offs | todo | — | — | — | |
-| B15 | Final phase: production scenarios S1–S16 (see its section in `PLAN.md`) | todo | — | — | — | Starts only after B14 |
-| H1 | Uncommitted state: `snap7_client.py` and `.cursor/rules/graphify.mdc` deleted, `requirements.txt` emptied | done | — | — | — | Deletions and the empty `requirements.txt` are committed in `56d8b68`. The user decided these files are not needed. |
-| H2 | `BEST_PRACTICES.md` in the repo | done | — | — | — | Committed with this change |
-| H3 | Tutor mode scope | done | — | — | — | Decided: every build step gets a quiz after its merge |
+| Step | Task | Status | Builder | Reviewer | PR | quiz_ready | Notes |
+|---|---|---|---|---|---|---|---|
+| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | merged | claude-code | zed | #1 | true | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). CI green on PR #1. |
+| B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | todo | — | — | — | false |  |
+| B3 | Hybrid retrieval, RRF, reranker, unit tests | todo | — | — | — | false |  |
+| B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | false |  |
+| B5 | Phoenix tracing | todo | — | — | — | false |  |
+| B6 | FastAPI (`/health`, `/ready`, `/query`) + `api` image, `docker compose up` | todo | — | — | — | false |  |
+| B7 | Eval: `rag eval` (Ragas), `rag eval-gate`, eval job in `ci.yml` | todo | — | — | — | false |  |
+| B8 | Postgres + Alembic + auth | todo | — | — | — | false |  |
+| B9 | Redis: async ingest worker, query cache, per-user budget, conversation memory | todo | — | — | — | false |  |
+| B10 | Streaming `/query/stream` + Next.js frontend + `web` image | todo | — | — | — | false |  |
+| B11 | Nginx gateway image, rate limits, Cloudflare Tunnel | todo | — | — | — | false |  |
+| B12 | Observability: Prometheus, JSON logs, Grafana, k6 load test | todo | — | — | — | false |  |
+| B13 | VM + CD: cloud-init, runner, `release.yml`, `deploy.yml` | todo | — | — | — | false | Needs user confirmation before the first Docker Hub push |
+| B14 | README with architecture and trade-offs | todo | — | — | — | false |  |
+| B15 | Final phase: production scenarios S1–S16 (see its section in `PLAN.md`) | todo | — | — | — | false | Starts only after B14 |
+| H1 | Uncommitted state: `snap7_client.py` and `.cursor/rules/graphify.mdc` deleted, `requirements.txt` emptied | resolved | — | — | — | — | Deletions and the empty `requirements.txt` are committed in `56d8b68`. The user decided these files are not needed. |
+| H2 | `BEST_PRACTICES.md` in the repo | resolved | — | — | — | — | Committed with this change |
+| H3 | Tutor mode scope | resolved | — | — | — | — | Decided: every build step gets a quiz after its merge |
 
 ## Handoff notes
 
@@ -165,6 +165,7 @@ Rules:
 - 2026-10-18: Zed reads `CLAUDE.md` by default. No `AGENTS.md` is added, because Zed would read it instead.
 - 2026-10-18: Tutoring is a separate `tutor` agent. Quizzes are per step, grouped by phase, created with `/quiz BN` after each merge.
 - 2026-10-18: Only the user creates release tags, on `Dev`.
+- 2026-10-18: Board statuses are `todo`, `spec`, `doing`, `review`, `merged`, `blocked`. `review` is derived from the PR. `quiz_ready` is a separate column, set to `true` by `/quiz`.
 - 2026-10-18: Spec-driven steps. One spec per step in `specs/`. The builder codes only from an approved spec. One commit per substep. Tutor reads the spec, not the plan.
 
 ## Open questions for the user

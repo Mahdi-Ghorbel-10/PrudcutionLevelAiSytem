@@ -12,5 +12,5 @@ Create the quiz for build step $ARGUMENTS. The step must already be merged into 
    - `quizzes/phase-N/$ARGUMENTS-<name>.md`
    - `quizzes/answers/phase-N/$ARGUMENTS-<name>.key.md`
 4. Put the quiz in the working tree. Do not commit it, because the user commits quiz files to `Dev`.
-5. Add `quiz: ready` to the step's Notes on the board in `COLLABORATION.md`.
+5. Set the step's `quiz_ready` cell to `true` on the board in `COLLABORATION.md`. Change nothing else in that row.
 6. Reply with the two file paths and the number of questions. Do not show the answers.
