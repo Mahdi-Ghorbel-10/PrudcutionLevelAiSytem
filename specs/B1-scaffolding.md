@@ -17,7 +17,7 @@ Each substep is one commit and one testable behaviour. Tick a box only when its 
 - [x] **5. LLM image.** Files: `docker/llm.Dockerfile` (`FROM` a pinned llama.cpp server tag, `COPY` the GGUF into `/models`, `CMD` with `-c 4096 --jinja`). Done-check: `docker build -f docker/llm.Dockerfile .` succeeds.
 - [x] **6. Compose.** Files: `docker-compose.yml` with services `llm` and `phoenix` (pinned tag, healthcheck, `mem_limit` from PLAN "Memory budget", named volume `phoenix_data`). Done-check: `docker compose up -d` then `docker compose ps` shows both healthy.
 - [x] **7. Smoke test.** Done-check: `curl -s localhost:8080/v1/chat/completions -H 'Content-Type: application/json' -d '{"model":"local","messages":[{"role":"user","content":"Say hi"}]}'` returns a JSON completion. Record the response in the handoff.
-- [ ] **8. CI.** Files: `.github/workflows/ci.yml`. Runs ruff, mypy and pytest on every pull request and on push to `Dev`. Done-check: the workflow passes on the B1 pull request.
+- [x] **8. CI.** Files: `.github/workflows/ci.yml`. Runs ruff, mypy and pytest on every pull request and on push to `Dev`. Done-check: the workflow passes on the B1 pull request.
 
 ## Out of scope
 - Layered backend (routes, services, repositories), `/api/v1` routes, and `/health` and `/ready` endpoints (B6).
