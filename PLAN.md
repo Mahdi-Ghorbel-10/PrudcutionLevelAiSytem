@@ -1,74 +1,20 @@
 # Plan: Agentic RAG Platform (CPU-first, Dockerized, CI/CD, Docker Hub distributed)
 
-## Collaboration and status (read first, every session)
-Two agents work in this repo on the same working tree: **Claude Code** (owner id `claude-code`) and the **Zed agent** (owner id `zed`). This section is the shared source of truth for who is doing what. `CLAUDE.md` holds the working rules; this file holds the state.
-
-**Start of every session**
-1. Read this section and the Board below.
-2. Run `git status --short` and `git log --oneline -3`. Anything modified that is not on the Board is someone else's work until the user says otherwise. Don't revert it.
-
-**Claiming work**
-- Before editing code for a build step, set its Owner to your id and Status to `doing`, with today's date in Notes. Update this file first, then edit code.
-- One owner per build step. If a step is `doing` for the other agent, don't edit its files. Write a question under Open questions or ask the user.
-- Claims are advisory because we share one working tree. Re-read the Board before each edit if your last read was more than a few minutes ago.
-- Finish or hand off one step before starting another.
-
-**Finishing or stopping**
-- Set Status to `review` (the other agent or the user should check it) or `done` (tests passed; say which ones in Notes). Set `blocked` with a reason if you are stuck.
-- Add a Handoff note under the Board: files touched, commands run and their results, what is left, and what the next owner should do first.
-- If you stop midway, say so in the handoff. Never leave a step `doing` without a note.
-
-**Changing the plan**
-- Don't change the design silently. A deviation goes in the Decisions log (date, what, why, who). If it changes scope, also add it to Open questions for the user.
-- Deleting files and rewriting git history happen only when the user asks for them in that conversation. Committing and pushing follow the Git workflow below.
-
-### Git workflow
-`Dev` is the integration branch. Each build step gets its own branch, `bN-<short-name>` (e.g. `b2-ingestion`), cut from the latest `Dev`.
-- **Enforcement (current):** the repo is private on a free GitHub plan, so GitHub does not enforce branch protection or rulesets. Agents follow these rules as instructions in `CLAUDE.md`, and the user merges PRs by hand.
-- **Commit:** the owning agent commits on its step branch on its own, in small commits prefixed with the step id (`B2: ...`), with the Co-Authored-By trailer.
-- **Push:** the owner pushes its step branch after each commit. Only the step branch, never `Dev`.
-- **Pull request:** when a step moves to `review`, the owner opens a PR into `Dev`. The PR body lists the board step, files touched and test results.
-- **Merging:** the owner opens the PR and the user merges it. Auto-merge (`gh pr merge --auto --squash`) becomes available once the repo is on GitHub Pro or public, B1 is merged, and `Dev` requires the `ci.yml` check.
-- **Failing CI:** fix it on the same branch. After 2 failed attempts, set the step `blocked` and ask the user.
-- **Sync:** before starting a step, `git fetch` and rebase onto `Dev`.
-- **After merge:** delete the step branch and set the step `done`.
-- **Never:** push to `Dev`, force-push, or merge a PR. Docker Hub pushes and deploys (B13) need the user's OK, even when CI passes.
-
-### Board
-| Step | Task | Owner | Status | Notes |
-|---|---|---|---|---|
-| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | — | todo | |
-| B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | — | todo | |
-| B3 | Hybrid retrieval, RRF, reranker, unit tests | — | todo | |
-| B4 | LangGraph agent + guardrails, `rag ask` | — | todo | |
-| B5 | Phoenix tracing | — | todo | |
-| B6 | FastAPI (`/health`, `/ready`, `/query`) + `api` image, `docker compose up` | — | todo | |
-| B7 | Eval: `rag eval` (Ragas), `rag eval-gate`, eval job in `ci.yml` | — | todo | |
-| B8 | Postgres + Alembic + auth | — | todo | |
-| B9 | Redis: async ingest worker, query cache, per-user budget, conversation memory | — | todo | |
-| B10 | Streaming `/query/stream` + Next.js frontend + `web` image | — | todo | |
-| B11 | Nginx gateway image, rate limits, Cloudflare Tunnel | — | todo | |
-| B12 | Observability: Prometheus, JSON logs, Grafana, k6 load test | — | todo | |
-| B13 | VM + CD: cloud-init, runner, `release.yml`, `deploy.yml` | — | todo | Needs user confirmation before the first Docker Hub push |
-| B14 | README with architecture and trade-offs | — | todo | |
-| B15 | Final phase: production scenarios S1–S16 (see its section) | — | todo | Starts only after B14 |
-| H1 | Uncommitted state: `snap7_client.py` and `.cursor/rules/graphify.mdc` deleted, `requirements.txt` modified, `models/` and `PLAN.md` untracked | user | open | Neither agent touches these until the user decides |
-| H2 | `BEST_PRACTICES.md` is referenced in this plan but does not exist | user | open | Create it or remove the reference |
-
-### Handoff notes
-- _(none yet)_
+## Collaboration (read first)
+Roles, the status flow, the board, handoffs and the worktree setup live in `COLLABORATION.md`. Read it before any step. `CLAUDE.md` holds the working rules that apply to every agent.
 
 ### Decisions log
-- 2026-10-18: Collaboration protocol adopted (this section and the matching rules in `CLAUDE.md`). Shared working tree; claims are advisory.
+Design decisions for this project. Collaboration decisions are in `COLLABORATION.md`.
+- 2026-10-18: Tutoring is a separate `tutor` agent. Quizzes are per step, grouped by phase, created with `/quiz BN` after each merge.
+- 2026-10-18: `main` is replaced by `Dev` in CI/CD and branch protection.
+- 2026-10-18: The API prefix is `/api/v1/` (from `BEST_PRACTICES.md` Step 1).
+- 2026-10-18: B4 includes the `pipeline: vanilla | agent` flag, which the B7 ablation needs. Complexity routing is deferred until after B7.
 
 ### Open questions for the user
-- Should `PLAN.md` and `CLAUDE.md` be committed to `Dev`? Recommended: yes, so both agents read the same version.
-- Does the Zed agent load `CLAUDE.md` as project rules? Check by asking it to quote the Collaboration section.
-- Stay on one shared working tree (current setup, fine while steps run in order) or give each agent its own git worktree for parallel steps?
+- None on design. Collaboration questions are in `COLLABORATION.md`.
 
 ## Context
 Personal learning project: build a RAG system with production-grade tools (OpenAI-compatible model server, LangGraph, hybrid search + RRF, cross-encoder rerank, Phoenix tracing, Ragas evals), **wrapped in a production web stack (Next.js frontend, Nginx gateway, auth, Postgres, Redis queue/cache, Prometheus/Grafana) and shipped through a CI/CD pipeline** that tests, evaluates, scans, builds and pushes images to Docker Hub, then deploys them with `docker compose up`. The repo is empty except graphify tooling (`CLAUDE.md`, `.claude/settings.json`, `.cursor/rules/graphify.mdc`).
-
 Target machine (checked): dev PC, i7-10750H 6c/12t with AVX2, 15 GB RAM (~5.5 GB free in practice), **no NVIDIA GPU visible on PCI** (only Intel UHD), Docker 28.3 **without the compose plugin**, 25 GB free disk.
 So we use **CPU inference with llama.cpp `llama-server`**, which has the same OpenAI-compatible API as SGLang/vLLM. The app only knows `LLM_BASE_URL`, so a GPU swap later (llama.cpp CUDA image, or SGLang) is a compose/env change.
 
@@ -318,7 +264,7 @@ Goal: behave like a production team. For every scenario: run a **baseline**, obs
 11. Nginx gateway image + rate limits; Cloudflare Tunnel for a public URL.
 12. Observability: Prometheus metrics, JSON logs, Grafana dashboard (latency per node, cache hit rate, route mix, retries, guard blocks); k6 load test, record p95 in README.
 13. VM + CD: write `deploy/vm/cloud-init.yaml`, `make vm-up`, verify hardening, install the runner on the VM, create `/opt/rag/.env`; then `release.yml` (build, Trivy, push, deploy bundle) and `deploy.yml` (runs on the VM runner: pull, up, `/ready`, smoke test, rollback). **First Docker Hub push only after you confirm, since it's a public action.**
-14. README with architecture diagram and design trade-offs. Run `graphify update .` after code changes (per CLAUDE.md).
+14. README with architecture <!--  -->diagram and design trade-offs. Run `graphify update .` after code changes (per CLAUDE.md).
 15. **Final phase, production scenarios** (see section above): first the harness (mock LLM, k6 + Locust, Toxiproxy, SLOs, new metrics, alerts), then scenarios S1–S16 one at a time: baseline → failure → code change → re-run → numbers in `docs/benchmarks.md`, postmortem if something broke, runbook for each new alert. Finish with a game day and `docs/capacity.md`. S17 (k3s autoscaling) is optional.
 
 ## Verification
@@ -336,4 +282,4 @@ Goal: behave like a production team. For every scenario: run a **baseline**, obs
 - VM hardening: SSH with a password is refused, root SSH is refused, `ufw status` shows only SSH allowed, `docker` runs without sudo for `deploy`.
 - Backup/restore: `make vm-backup`, destroy and recreate the VM, `make vm-restore` → previous documents and users are back.
 - `docker stats`: core stack stays under ~4.2 GB.
-- Final phase: every scenario S1–S16 has a before/after row in `docs/benchmarks.md`; SLOs in `docs/slo.md` hold under the average-load test; under the stress test the system sheds load with 503/429 instead of timing out; killing an API replica or Redis during load causes no crash and recovers automatically; a deploy during load drops zero requests; game day completed using only dashboards and runbooks.
+- Final phase: every scenario S1–S16 has a before/after row in `docs/benchmarks.md`; SLOs in `docs/slo.md` hold under the average-load test; under the stress test the system sheds load with 504/429 instead of timing out; killing an API replica or Redis during load causes no crash and recovers automatically; a deploy during load drops zero requests; game day completed using only dashboards and runbooks.

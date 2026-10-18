@@ -14,14 +14,15 @@ Rules:
 
 ## Collaboration (Claude Code and the Zed agent)
 
-Two agents share this repo and its working tree. The full protocol and the live status board are in `PLAN.md` → "Collaboration and status". Read that section before starting work.
+Claude Code is the builder, Zed is the reviewer, and the user merges. Each agent works in its own git worktree. The full protocol, roles, status flow and board are in `COLLABORATION.md`. Read it before starting work.
 
 Rules for every agent:
-- Read `PLAN.md`'s Board and run `git status` before editing anything.
-- Claim a build step (Owner + `doing`) in `PLAN.md` before editing its files. Don't edit files of a step another agent owns.
-- Never revert or delete changes you didn't make. Files marked on the Board as `open` belong to the user.
-- Finish with a Status update and a Handoff note in `PLAN.md`, listing files touched, commands run and results, and the next step.
-- Record any deviation from the plan in the Decisions log. Don't change the design silently.
-- Commit and push on your step branch automatically, as described in `PLAN.md` → "Git workflow". Never push to `Dev`, force-push, or merge a PR; the user merges.
+- Read `COLLABORATION.md` and run `git status` in your worktree before editing anything.
+- Claim a build step (status `doing`) on the board before editing its files. Don't edit files of a step another agent is reviewing or building.
+- Never revert or delete changes you didn't make. Files marked `open` on the board belong to the user.
+- Finish with a board update and a handoff note in `COLLABORATION.md`, listing files touched, commands run and results, and the next step.
+- Record any deviation from the plan in the Decisions log of `PLAN.md`. Don't change the design silently.
+- Commit and push on your own step branch. Never push to `Dev`, force-push, or merge a PR; the user merges.
 - Don't delete files or rewrite history unless the user asks in that conversation.
+- Tutor quizzes are created with `/quiz BN` after a merge. Don't read `quizzes/answers/`.
 - After code changes, run `graphify update .`.

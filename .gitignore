@@ -1,0 +1,6 @@
+models/
+.venv/
+data/raw/
+*.gguf
+__pycache__/
+.env
