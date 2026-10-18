@@ -1,0 +1,72 @@
+name: Board sync
+
+# When a build-step PR merges into Dev, set that step's status to "merged" on the board.
+# The step id comes from the branch name (bN-<name>), or from the input when run by hand.
+on:
+  pull_request:
+    types: [closed]
+    branches: [Dev]
+  workflow_dispatch:
+    inputs:
+      step:
+        description: 'Build step to mark merged, e.g. B1'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+# One sync at a time, so two merges cannot race on the same file.
+concurrency:
+  group: board-sync
+  cancel-in-progress: false
+
+jobs:
+  mark-merged:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: Dev
+
+      - name: Resolve the build step
+        id: step
+        env:
+          INPUT_STEP: ${{ inputs.step }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if [ -n "$INPUT_STEP" ]; then
+            step="$INPUT_STEP"
+          else
+            step="$(echo "$HEAD_REF" | sed -n -E 's/^b([0-9]+)-.*/B\1/p')"
+          fi
+          if [ -z "$step" ]; then
+            echo "Not a build-step branch ($HEAD_REF). Nothing to do."
+          elif ! echo "$step" | grep -qE '^B[0-9]+$'; then
+            echo "error: step must look like B1, got '$step'" >&2
+            exit 1
+          fi
+          echo "step=$step" >> "$GITHUB_OUTPUT"
+
+      - name: Mark the step merged on the board
+        if: steps.step.outputs.step != ''
+        env:
+          STEP: ${{ steps.step.outputs.step }}
+        run: python3 scripts/board_sync.py COLLABORATION.md "$STEP" merged
+
+      - name: Commit and push to Dev
+        if: steps.step.outputs.step != ''
+        env:
+          STEP: ${{ steps.step.outputs.step }}
+        run: |
+          if git diff --quiet -- COLLABORATION.md; then
+            echo "Board already up to date for $STEP."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add COLLABORATION.md
+          git commit -m "Board: $STEP merged"
+          git pull --rebase origin Dev
+          git push origin HEAD:Dev
