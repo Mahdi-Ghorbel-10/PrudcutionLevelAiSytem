@@ -1,6 +1,6 @@
 # Spec: B1 Scaffolding
 
-Status: draft (awaiting user approval of the decisions below)
+Status: building (approved 2026-10-18 by the user, who said "ok start B1"; decisions taken as recommended below)
 Board row: `COLLABORATION.md` → B1
 Design context: `PLAN.md` → Architecture, Layout, Images, Build order step 1. Best practices: `BEST_PRACTICES.md` → Phase 0 and Step 1.
 
@@ -27,11 +27,11 @@ Each substep is one commit and one testable behaviour. Tick a box only when its 
 - Web tooling (B10), Docker Hub pushes and deploys (B13).
 
 ## Decisions needing approval
-- [ ] **D1. Dependency manager.** Recommended: `uv` with a lockfile. Alternative: `pip` with `requirements.txt` and a venv.
-- [ ] **D2. llama.cpp image tag.** Recommended: the newest stable server tag at build time, pinned by version and recorded in the handoff. Never `latest`. Alternative: a tag you pick now.
-- [ ] **D3. Phoenix image tag.** Recommended: the newest release tag at build time, pinned and recorded. Alternative: a tag you pick now.
-- [ ] **D4. Package layout.** Recommended: `src/rag_agent/` as in PLAN "Layout". Alternative: flat `rag_agent/` at the repo root.
-- [ ] **D5. CPU torch in B1.** Recommended: add it in B2, when embeddings first need it, so B1 stays small. Alternative: add it now with the CPU index.
+- [x] **D1. Dependency manager.** Taken: `uv` with a lockfile.
+- [x] **D2. llama.cpp image tag.** Taken: newest stable server tag, pinned by version and recorded in the handoff. Never `latest`.
+- [x] **D3. Phoenix image tag.** Taken: newest release tag, pinned and recorded.
+- [x] **D4. Package layout.** Taken: `src/rag_agent/`.
+- [x] **D5. CPU torch in B1.** Taken: deferred to B2.
 
 ## Prerequisites (user)
 - Install the Docker Compose plugin (`sudo apt install docker-compose-plugin`), as PLAN "Prerequisites" says. The dev PC has Docker 28.3 without it.
@@ -46,3 +46,4 @@ Each substep is one commit and one testable behaviour. Tick a box only when its 
 
 ## Change log
 - 2026-10-18: Draft created from PLAN build order step 1 and BEST_PRACTICES Step 1.
+- 2026-10-18: Approved. Decisions D1 to D5 taken as recommended. Compose plugin confirmed present (v5.6.0). Python 3.11 is not installed on the system, so `uv` provisions it.

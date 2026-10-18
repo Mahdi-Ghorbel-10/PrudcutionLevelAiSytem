@@ -128,7 +128,7 @@ Rules:
 
 | Step | Task | Status | Builder | Reviewer | PR | Notes |
 |---|---|---|---|---|---|---|
-| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | spec | — | — | — | Spec: `specs/B1-scaffolding.md`, awaiting approval of D1 to D5 |
+| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | doing | claude-code | — | — | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). Branch `b1-scaffolding`, worktree `../rag-claude`. |
 | B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | todo | — | — | — | |
 | B3 | Hybrid retrieval, RRF, reranker, unit tests | todo | — | — | — | |
 | B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | |
