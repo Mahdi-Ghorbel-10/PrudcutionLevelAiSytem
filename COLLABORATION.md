@@ -129,7 +129,7 @@ Rules:
 | Step | Task | Status | Builder | Reviewer | PR | quiz_ready | Notes |
 |---|---|---|---|---|---|---|---|
 | B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | merged | claude-code | zed | #1 | true | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). CI green on PR #1. |
-| B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | todo | — | — | — | false |  |
+| B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | spec | claude-code | — | — | false | Spec: `specs/B2-ingestion.md` (drafted 2026-10-18, awaiting approval of D1 to D6). Branch `b2-ingestion`. |
 | B3 | Hybrid retrieval, RRF, reranker, unit tests | todo | — | — | — | false |  |
 | B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | false |  |
 | B5 | Phoenix tracing | todo | — | — | — | false |  |
