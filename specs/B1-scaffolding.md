@@ -10,7 +10,7 @@ A runnable project skeleton: Python project with config and lint/test tooling, a
 ## Substeps
 Each substep is one commit and one testable behaviour. Tick a box only when its done-check passes.
 
-- [ ] **1. Project tooling.** Files: `pyproject.toml` (Python 3.11, `src/rag_agent/` package, ruff, mypy, pytest settings), `src/rag_agent/__init__.py`, `tests/test_smoke.py` (one placeholder test). Done-check: `uv run ruff check .`, `uv run mypy src`, and `uv run pytest` all pass.
+- [x] **1. Project tooling.** Files: `pyproject.toml` (Python 3.11, `src/rag_agent/` package, ruff, mypy, pytest settings), `src/rag_agent/__init__.py`, `tests/test_smoke.py` (one placeholder test). Done-check: `uv run ruff check .`, `uv run mypy src`, and `uv run pytest` all pass.
 - [ ] **2. Config.** Files: `src/rag_agent/config.py` (pydantic-settings; reads `config.yaml` for tunables and env vars for secrets and environment-specific values; fails fast when a required value is missing), `config.yaml` (placeholder tunables only), `.env.example` (every key, no values). Done-check: unit test loads the config; a unit test shows a missing required value raises at startup.
 - [ ] **3. Pre-commit.** Files: `.pre-commit-config.yaml` with ruff, mypy and gitleaks. Done-check: `uv run pre-commit run --all-files` passes on the repo.
 - [ ] **4. Model export.** Files: `scripts/export_model.sh`. Copies the Ollama GGUF blob (found with `ollama show --modelfile qwen…` → `FROM` line) to `models/qwen2.5-0.5b-instruct-q4_k_m.gguf`. Done-check: script runs; `sha256sum` of the copy matches the Ollama blob's hash.
