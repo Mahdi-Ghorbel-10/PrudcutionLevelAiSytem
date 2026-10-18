@@ -7,3 +7,20 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- For library, framework, SDK, API, CLI or cloud-service docs (syntax, config, version migration, setup), use the `ctx7` CLI instead of training data or web search:
+  1. `npx ctx7@latest library <name> "<what to look up>"` with the official name (e.g. "Next.js", "Customer.io"). Pick the best match (`/org/project`).
+  2. `npx ctx7@latest docs <libraryId> "<what to look up>"`, one concept per query.
+  Max 3 commands per question. Don't include secrets in queries. On a quota error, tell the user and suggest `npx ctx7@latest login` or `CONTEXT7_API_KEY`. Don't use it for refactoring, business logic, code review or general concepts.
+
+## Collaboration (Claude Code and the Zed agent)
+
+Two agents share this repo and its working tree. The full protocol and the live status board are in `PLAN.md` → "Collaboration and status". Read that section before starting work.
+
+Rules for every agent:
+- Read `PLAN.md`'s Board and run `git status` before editing anything.
+- Claim a build step (Owner + `doing`) in `PLAN.md` before editing its files. Don't edit files of a step another agent owns.
+- Never revert or delete changes you didn't make. Files marked on the Board as `open` belong to the user.
+- Finish with a Status update and a Handoff note in `PLAN.md`, listing files touched, commands run and results, and the next step.
+- Record any deviation from the plan in the Decisions log. Don't change the design silently.
+- Don't delete files, rewrite history, commit or push unless the user asks in that conversation.
+- After code changes, run `graphify update .`.
