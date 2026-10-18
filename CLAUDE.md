@@ -22,6 +22,6 @@ Rules for every agent:
 - Never revert or delete changes you didn't make. Files marked on the Board as `open` belong to the user.
 - Finish with a Status update and a Handoff note in `PLAN.md`, listing files touched, commands run and results, and the next step.
 - Record any deviation from the plan in the Decisions log. Don't change the design silently.
-- Commit and push on your step branch automatically, as described in `PLAN.md` → "Git workflow". Never push to `Dev`, force-push, or merge by hand.
+- Commit and push on your step branch automatically, as described in `PLAN.md` → "Git workflow". Never push to `Dev`, force-push, or merge a PR; the user merges.
 - Don't delete files or rewrite history unless the user asks in that conversation.
 - After code changes, run `graphify update .`.

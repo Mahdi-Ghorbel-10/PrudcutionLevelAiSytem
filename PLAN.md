@@ -22,16 +22,17 @@ Two agents work in this repo on the same working tree: **Claude Code** (owner id
 - Don't change the design silently. A deviation goes in the Decisions log (date, what, why, who). If it changes scope, also add it to Open questions for the user.
 - Deleting files and rewriting git history happen only when the user asks for them in that conversation. Committing and pushing follow the Git workflow below.
 
-### Git workflow (automatic)
+### Git workflow
 `Dev` is the integration branch. Each build step gets its own branch, `bN-<short-name>` (e.g. `b2-ingestion`), cut from the latest `Dev`.
+- **Enforcement (current):** the repo is private on a free GitHub plan, so GitHub does not enforce branch protection or rulesets. Agents follow these rules as instructions in `CLAUDE.md`, and the user merges PRs by hand.
 - **Commit:** the owning agent commits on its step branch on its own, in small commits prefixed with the step id (`B2: ...`), with the Co-Authored-By trailer.
 - **Push:** the owner pushes its step branch after each commit. Only the step branch, never `Dev`.
 - **Pull request:** when a step moves to `review`, the owner opens a PR into `Dev`. The PR body lists the board step, files touched and test results.
-- **Auto-merge:** the owner enables auto-merge (`gh pr merge --auto --squash`). GitHub merges once the required checks pass. Enable this only after B1 is merged and `Dev` requires the `ci.yml` check. Until then, nothing merges without the user.
+- **Merging:** the owner opens the PR and the user merges it. Auto-merge (`gh pr merge --auto --squash`) becomes available once the repo is on GitHub Pro or public, B1 is merged, and `Dev` requires the `ci.yml` check.
 - **Failing CI:** fix it on the same branch. After 2 failed attempts, set the step `blocked` and ask the user.
 - **Sync:** before starting a step, `git fetch` and rebase onto `Dev`.
 - **After merge:** delete the step branch and set the step `done`.
-- **Never:** push to `Dev`, force-push, or merge by hand. Docker Hub pushes and deploys (B13) need the user's OK, even when CI passes.
+- **Never:** push to `Dev`, force-push, or merge a PR. Docker Hub pushes and deploys (B13) need the user's OK, even when CI passes.
 
 ### Board
 | Step | Task | Owner | Status | Notes |
@@ -176,7 +177,7 @@ Prometheus counts requests, latency per node, cache hit rate, route taken, retri
 - **Eval gate, made deterministic.** A 0.5B judge gives noisy Ragas scores, so CI blocks only on **retrieval metrics** that need no LLM judge: hit rate@4 and MRR against `source_doc` labels, plus "router picks `direct` for greetings" and "answer cites at least one source". Thresholds live in `evals/thresholds.yaml`. Full Ragas runs nightly / on demand and are reported as a non-blocking artifact.
 - **Pre-commit hooks** (ruff, mypy, prettier, gitleaks) so most CI failures are caught locally.
 - **Secrets:** `DOCKERHUB_USER`, `DOCKERHUB_TOKEN` (access token, not password), `JWT_SECRET` in GitHub secrets; deploy machine keeps its own `.env`.
-- **Branch protection on Dev:** PR required, CI must pass, no direct pushes or force pushes.
+- **Branch protection on Dev:** PR required, CI must pass, no direct pushes or force pushes. Needs GitHub Pro or a public repo; until then the rules are advisory (see Git workflow).
 
 ## Layout
 ```
