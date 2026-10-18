@@ -18,7 +18,7 @@ Claude Code is the builder, Zed is the reviewer, and the user merges. Each agent
 
 Rules for every agent:
 - Read `COLLABORATION.md` and run `git status` in your worktree before editing anything.
-- Claim a build step (status `doing`) on the board before editing its files. Don't edit files of a step another agent is reviewing or building.
+- Build a step only from its approved spec in `specs/`. One commit per substep. Claim a build step (status `doing`) on the board before editing its files. Don't edit files of a step another agent is reviewing or building.
 - Never revert or delete changes you didn't make. Files marked `open` on the board belong to the user.
 - Finish with a board update and a handoff note in `COLLABORATION.md`, listing files touched, commands run and results, and the next step.
 - Record any deviation from the plan in the Decisions log of `PLAN.md`. Don't change the design silently.

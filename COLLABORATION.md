@@ -7,6 +7,14 @@ Three roles, each with its own worktree:
 
 `CLAUDE.md` holds the working rules for every agent. This file holds the process, the board and the handoffs.
 
+## Principles
+
+- **Spec before code.** Each step has an approved spec in `specs/`. Design choices are settled there, before any code is written.
+- **Small, checkable steps.** A substep is one commit with one done-check. Nothing is marked done without its check run.
+- **The builder does not grade its own work.** Review is done by a different agent or by the user.
+- **State lives in files, not chat.** The board, specs and handoffs are the record. A new session starts from them.
+- **Keep always-loaded docs short.** `CLAUDE.md` and this file load every session. Detail goes in the spec or the plan.
+
 ## Worktrees
 
 Each agent has its own worktree, so neither one edits the other's files. The user keeps the main checkout on `Dev`.
@@ -28,10 +36,19 @@ A worktree can't check out `Dev` while the main checkout is on it, so both use `
 
 ## Start of every session (both agents)
 
-1. Read this file: the Board, the Status flow and your role's rules.
+1. Read this file: the Board, the Status flow and your role's rules. For a step, read its spec in `specs/` and nothing else from the specs folder.
 2. Run `git status --short`, `git branch --show-current` and `git log --oneline -5` in your worktree.
 3. Check the board against `gh pr list --state all`. If they disagree, GitHub wins: correct the board.
 4. Act only on a step whose status gives you the turn. Anything modified that you didn't do and that no handoff explains belongs to someone else. Don't revert it; ask the user.
+
+## Specs (one file per step)
+
+- Each step has one spec: `specs/Bx-<name>.md`, copied from `specs/_template.md`. The board's Notes column links to it.
+- Spec status moves `draft` → `approved` → `building` → `review` → `done`. The builder writes no code until the spec is `approved`.
+- The user approves a spec by ticking its **Decisions needing approval**. Anything not in the decisions list can be settled by the builder, as long as it fits the spec.
+- Each substep is one commit. Tick its box only when its done-check passes, and put the result in the handoff.
+- To change a spec after approval, the builder edits the spec first and adds a Change log line. Design-level changes need the user's OK, and go in the Decisions log of `PLAN.md` too.
+- The reviewer checks the code against the spec's substeps and "Done when". The tutor uses the spec and the merged code for the quiz.
 
 ## Status and review
 
@@ -40,7 +57,8 @@ Hand-set statuses:
 | Status | Set by | Meaning |
 |---|---|---|
 | `todo` | — | Not started |
-| `doing` | Builder | Building on the step branch |
+| `spec` | Builder | Spec drafted, waiting for the user's approval |
+| `doing` | Builder | Building on the step branch, after the spec is approved |
 | `blocked` | Anyone | Stuck. Reason in Notes. The user decides. |
 | `done` | User, after the merge | Merged into `Dev`, branch deleted |
 
@@ -60,8 +78,9 @@ Rules:
 
 ## Claude Code (builder) rules
 
-- Before coding: `git fetch`, cut `bN-<short-name>` from `origin/Dev`, set the step to `doing` with today's date.
-- Commit in small commits prefixed `BN: ...`, with the Co-Authored-By trailer. Push the step branch after each commit.
+- Before the spec: draft `specs/Bx-<name>.md` from the template and set the step to `spec`. Wait for approval.
+- Before coding: the spec is `approved`. `git fetch`, cut `bN-<short-name>` from `origin/Dev`, set the step to `doing` with today's date.
+- Build substep by substep. One commit per substep, prefixed `BN: ...`, with the Co-Authored-By trailer. Tick the substep's box in the spec and push the step branch after each commit.
 - Follow the matching entries in `BEST_PRACTICES.md`. Use `ctx7` for library docs, as `CLAUDE.md` describes.
 - After code changes, run `graphify update .`.
 - Before handing to review: run the step's verification check and the test suite. Open a PR into `Dev` with: board step, files touched, commands run and results, anything left out on purpose. Set the Reviewer column and add a handoff note.
@@ -72,7 +91,8 @@ Rules:
 - Review only a step whose PR is open. In your worktree: `git fetch && git checkout bN-... && git pull`.
 - Check each item and post the result on the PR (`gh pr review` or `gh pr comment`):
   - [ ] The step's verification check and tests pass when re-run.
-  - [ ] It does what `PLAN.md` says for this step. Deviations are in the Decisions log.
+  - [ ] Every substep in the spec is ticked, and its done-check result is in the handoff.
+  - [ ] It does what the spec says. The spec matches `PLAN.md`; deviations are in the Decisions log.
   - [ ] It follows the matching entries in `BEST_PRACTICES.md`.
   - [ ] No secrets, keys or `.env` content committed. No model files or indexes committed.
   - [ ] Errors are handled. No silent `except: pass`. Network calls have timeouts.
@@ -108,7 +128,7 @@ Rules:
 
 | Step | Task | Status | Builder | Reviewer | PR | Notes |
 |---|---|---|---|---|---|---|
-| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | todo | — | — | — | |
+| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | spec | — | — | — | Spec: `specs/B1-scaffolding.md`, awaiting approval of D1 to D5 |
 | B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | todo | — | — | — | |
 | B3 | Hybrid retrieval, RRF, reranker, unit tests | todo | — | — | — | |
 | B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | |
@@ -139,6 +159,7 @@ Rules:
 - 2026-10-18: Zed reads `CLAUDE.md` by default. No `AGENTS.md` is added, because Zed would read it instead.
 - 2026-10-18: Tutoring is a separate `tutor` agent. Quizzes are per step, grouped by phase, created with `/quiz BN` after each merge.
 - 2026-10-18: Only the user creates release tags, on `Dev`.
+- 2026-10-18: Spec-driven steps. One spec per step in `specs/`. The builder codes only from an approved spec. One commit per substep. Tutor reads the spec, not the plan.
 
 ## Open questions for the user
 
