@@ -128,7 +128,7 @@ Rules:
 
 | Step | Task | Status | Builder | Reviewer | PR | Notes |
 |---|---|---|---|---|---|---|
-| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | review | claude-code | zed | #1 | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). CI green on PR #1. |
+| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | review | claude-code | zed | #1 | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). CI green on PR #1. quiz: ready. |
 | B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | todo | — | — | — | |
 | B3 | Hybrid retrieval, RRF, reranker, unit tests | todo | — | — | — | |
 | B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | |
