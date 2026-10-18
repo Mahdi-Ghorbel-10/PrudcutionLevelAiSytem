@@ -1,6 +1,6 @@
 # Spec: B1 Scaffolding
 
-Status: building (approved 2026-10-18 by the user, who said "ok start B1"; decisions taken as recommended below)
+Status: review (approved 2026-10-18 by the user, who said "ok start B1"; decisions taken as recommended below)
 Board row: `COLLABORATION.md` → B1
 Design context: `PLAN.md` → Architecture, Layout, Images, Build order step 1. Best practices: `BEST_PRACTICES.md` → Phase 0 and Step 1.
 
