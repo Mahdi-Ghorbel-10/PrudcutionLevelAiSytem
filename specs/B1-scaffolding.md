@@ -14,7 +14,7 @@ Each substep is one commit and one testable behaviour. Tick a box only when its 
 - [x] **2. Config.** Files: `src/rag_agent/config.py` (pydantic-settings; reads `config.yaml` for tunables and env vars for secrets and environment-specific values; fails fast when a required value is missing), `config.yaml` (placeholder tunables only), `.env.example` (every key, no values). Done-check: unit test loads the config; a unit test shows a missing required value raises at startup.
 - [x] **3. Pre-commit.** Files: `.pre-commit-config.yaml` with ruff, mypy and gitleaks. Done-check: `uv run pre-commit run --all-files` passes on the repo.
 - [x] **4. Model export.** Files: `scripts/export_model.sh`. Copies the Ollama GGUF blob (found with `ollama show --modelfile qwen…` → `FROM` line) to `models/qwen2.5-0.5b-instruct-q4_k_m.gguf`. Done-check: script runs; `sha256sum` of the copy matches the Ollama blob's hash.
-- [ ] **5. LLM image.** Files: `docker/llm.Dockerfile` (`FROM` a pinned llama.cpp server tag, `COPY` the GGUF into `/models`, `CMD` with `-c 4096 --jinja`). Done-check: `docker build -f docker/llm.Dockerfile .` succeeds.
+- [x] **5. LLM image.** Files: `docker/llm.Dockerfile` (`FROM` a pinned llama.cpp server tag, `COPY` the GGUF into `/models`, `CMD` with `-c 4096 --jinja`). Done-check: `docker build -f docker/llm.Dockerfile .` succeeds.
 - [ ] **6. Compose.** Files: `docker-compose.yml` with services `llm` and `phoenix` (pinned tag, healthcheck, `mem_limit` from PLAN "Memory budget", named volume `phoenix_data`). Done-check: `docker compose up -d` then `docker compose ps` shows both healthy.
 - [ ] **7. Smoke test.** Done-check: `curl -s localhost:8080/v1/chat/completions -H 'Content-Type: application/json' -d '{"model":"local","messages":[{"role":"user","content":"Say hi"}]}'` returns a JSON completion. Record the response in the handoff.
 - [ ] **8. CI.** Files: `.github/workflows/ci.yml`. Runs ruff, mypy and pytest on every pull request and on push to `Dev`. Done-check: the workflow passes on the B1 pull request.
@@ -46,4 +46,5 @@ Each substep is one commit and one testable behaviour. Tick a box only when its 
 
 ## Change log
 - 2026-10-18: Draft created from PLAN build order step 1 and BEST_PRACTICES Step 1.
-- 2026-10-18: Approved. Decisions D1 to D5 taken as recommended. Compose plugin confirmed present (v5.6.0). Python 3.11 is not installed on the system, so `uv` provisions it.
+- 2026-10-18: Approved. Decisions D1 to D5 taken as recommended.
+- 2026-10-18: Substep 5. `CMD` also sets `--host 0.0.0.0 --port 8080`. Without them the server listens on 127.0.0.1 and no other container can reach it. Added `.dockerignore`. Pinned `ghcr.io/ggml-org/llama.cpp:server-b11718`, the newest `server-bNNNN` tag in the registry on 2026-10-18. Compose plugin confirmed present (v5.6.0). Python 3.11 is not installed on the system, so `uv` provisions it.
