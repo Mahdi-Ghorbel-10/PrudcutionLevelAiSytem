@@ -1,0 +1,41 @@
+# Local development stack. Services bind to 127.0.0.1 only, as PLAN "Architecture" requires.
+# Start with: docker compose up -d   Check with: docker compose ps
+name: rag
+
+services:
+  llm:
+    build:
+      context: .
+      dockerfile: docker/llm.Dockerfile
+    image: rag-llm:b1
+    ports:
+      # Host port is configurable: 8080 is taken on the dev PC by Jenkins.
+      - "127.0.0.1:${LLM_HOST_PORT:-8081}:8080"
+    mem_limit: 1200m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  phoenix:
+    image: arizephoenix/phoenix:20.23.0
+    ports:
+      - "127.0.0.1:6006:6006"
+    environment:
+      PHOENIX_WORKING_DIR: /phoenix-data
+    volumes:
+      - phoenix_data:/phoenix-data
+    mem_limit: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:6006/healthz', timeout=3).status == 200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  phoenix_data:

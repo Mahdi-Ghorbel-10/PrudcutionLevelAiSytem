@@ -1,0 +1,25 @@
+# Run `uv run pre-commit install` once per clone.
+# gitleaks must be on PATH. Install it from https://github.com/gitleaks/gitleaks/releases
+# (v8.30.1 tested). mypy and ruff run from the locked dev environment (`uv sync`).
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: gitleaks
+        name: gitleaks
+        entry: gitleaks git --pre-commit --staged --redact --no-banner
+        language: system
+        pass_filenames: false

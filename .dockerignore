@@ -1,0 +1,7 @@
+.git
+.venv
+**/__pycache__
+data/raw
+graphify-out
+quizzes
+specs

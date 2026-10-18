@@ -1,0 +1,2 @@
+# Tunables shared by every environment. Secrets and environment-specific values go in .env.
+llm_timeout_seconds: 30

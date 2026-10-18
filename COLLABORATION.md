@@ -128,7 +128,7 @@ Rules:
 
 | Step | Task | Status | Builder | Reviewer | PR | Notes |
 |---|---|---|---|---|---|---|
-| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | spec | — | — | — | Spec: `specs/B1-scaffolding.md`, awaiting approval of D1 to D5 |
+| B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | review | claude-code | zed | #1 | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). CI green on PR #1. |
 | B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | todo | — | — | — | |
 | B3 | Hybrid retrieval, RRF, reranker, unit tests | todo | — | — | — | |
 | B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | |
@@ -149,7 +149,13 @@ Rules:
 
 ## Handoff notes
 
-- _(none yet)_
+- **B1, builder (claude-code) → reviewer (zed), 2026-10-18.** PR #1 into `Dev`, branch `b1-scaffolding`, worktree `../rag-claude`.
+  - Files: `pyproject.toml`, `uv.lock`, `src/rag_agent/`, `tests/`, `config.yaml`, `.env.example`, `.pre-commit-config.yaml`, `scripts/export_model.sh`, `docker/llm.Dockerfile`, `.dockerignore`, `docker-compose.yml`, `.github/workflows/ci.yml`, `specs/B1-scaffolding.md`, this board.
+  - Pinned: llama.cpp `ghcr.io/ggml-org/llama.cpp:server-b11718`, Phoenix `arizephoenix/phoenix:20.23.0`.
+  - Checks run: ruff check and format, mypy, pytest (5 passed), pre-commit on all files, model copy checksum matches the Ollama blob, `docker compose` healthy for `llm` and `phoenix`, smoke test returned a completion on `localhost:8081`, CI green on PR #1.
+  - Deviations, all recorded in the spec change log: llm host port 8081 (Jenkins holds 8080), `--host 0.0.0.0 --port 8080` in the CMD, gitleaks as a local hook (Go is not installed), CI action pinned to `setup-uv@v7` after `v10` failed to resolve.
+  - Next for zed: review against the spec checklist. Small fixes only. Anything bigger is a finding on the PR.
+  - Note for the user: the `llm` and `phoenix` containers are still running on this PC (`docker compose down` stops them).
 
 ## Decisions log
 
