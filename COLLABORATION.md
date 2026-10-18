@@ -123,7 +123,7 @@ Rules:
 | B13 | VM + CD: cloud-init, runner, `release.yml`, `deploy.yml` | todo | — | — | — | Needs user confirmation before the first Docker Hub push |
 | B14 | README with architecture and trade-offs | todo | — | — | — | |
 | B15 | Final phase: production scenarios S1–S16 (see its section in `PLAN.md`) | todo | — | — | — | Starts only after B14 |
-| H1 | Uncommitted state: `snap7_client.py` and `.cursor/rules/graphify.mdc` deleted, `requirements.txt` modified | open (user) | — | — | — | Neither agent touches these until the user decides |
+| H1 | Uncommitted state: `snap7_client.py` and `.cursor/rules/graphify.mdc` deleted, `requirements.txt` emptied | done | — | — | — | Deletions and the empty `requirements.txt` are committed in `56d8b68`. The user decided these files are not needed. |
 | H2 | `BEST_PRACTICES.md` in the repo | done | — | — | — | Committed with this change |
 | H3 | Tutor mode scope | done | — | — | — | Decided: every build step gets a quiz after its merge |
 
@@ -142,4 +142,4 @@ Rules:
 
 ## Open questions for the user
 
-- H1: what to do with `snap7_client.py`, the `.cursor/rules/graphify.mdc` deletion and `requirements.txt` (keep, restore or commit).
+- None. H1 is resolved.
