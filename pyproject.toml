@@ -9,6 +9,8 @@ dependencies = [
     "pypdf>=6.21.1",
     "python-docx>=1.2.0",
     "pyyaml>=6.0",
+    "sentence-transformers>=6.1.0",
+    "torch>=2.14.1",
 ]
 
 [dependency-groups]
@@ -40,3 +42,12 @@ python_version = "3.11"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# CPU-only torch. The default index pulls the CUDA build, about 5 GB (decision D5).
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

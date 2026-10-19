@@ -13,6 +13,8 @@ ingestion:
   embed_with_heading: true
   chroma_path: data/chroma
   collection_name: chunks
+  embedding_model: BAAI/bge-small-en-v1.5
+  embed_batch_size: 32
 """
 
 
@@ -38,6 +40,7 @@ def test_loads_yaml_tunables_and_env_settings(
     assert config.tunables.ingestion.embed_with_heading is True
     assert config.tunables.ingestion.chroma_path == Path("data/chroma")
     assert config.tunables.ingestion.collection_name == "chunks"
+    assert config.tunables.ingestion.embedding_model == "BAAI/bge-small-en-v1.5"
 
 
 def test_overlap_must_be_smaller_than_chunk_size(

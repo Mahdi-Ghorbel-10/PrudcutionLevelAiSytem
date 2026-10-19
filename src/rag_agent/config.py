@@ -22,6 +22,8 @@ class IngestionTunables(BaseModel):
     embed_with_heading: bool
     chroma_path: Path
     collection_name: str = Field(min_length=1)
+    embedding_model: str = Field(min_length=1)
+    embed_batch_size: int = Field(gt=0)
 
     @model_validator(mode="after")
     def _overlap_is_smaller_than_chunk(self) -> "IngestionTunables":

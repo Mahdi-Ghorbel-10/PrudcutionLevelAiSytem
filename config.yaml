@@ -8,3 +8,5 @@ ingestion:
   embed_with_heading: true
   chroma_path: data/chroma
   collection_name: chunks
+  embedding_model: BAAI/bge-small-en-v1.5
+  embed_batch_size: 32
