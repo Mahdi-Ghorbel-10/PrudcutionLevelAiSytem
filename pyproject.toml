@@ -9,6 +9,7 @@ dependencies = [
     "pypdf>=6.21.1",
     "python-docx>=1.2.0",
     "pyyaml>=6.0",
+    "rank-bm25>=0.2.2",
     "sentence-transformers>=6.1.0",
     "torch>=2.14.1",
 ]
@@ -39,6 +40,10 @@ select = ["E", "F", "I", "B", "UP"]
 strict = true
 files = ["src", "tests"]
 python_version = "3.11"
+
+[[tool.mypy.overrides]]
+module = ["rank_bm25"]  # no type stubs published for this package
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
