@@ -87,6 +87,7 @@ Rules:
 - Before the spec: draft `specs/Bx-<name>.md` from the template, then ask the user to set the step to `spec`. Wait for approval.
 - Before coding: the spec is `approved`. `git fetch`, cut `bN-<short-name>` from `origin/Dev`, and push the branch. The workflow sets the step to `doing` when the spec on the branch says `approved`.
 - Build substep by substep. One commit per substep, prefixed `BN: ...`, with the Co-Authored-By trailer. Tick the substep's box in `handoffs/BN.md` and push the step branch after each commit.
+- Before building, read `handoffs/*.md` on `origin/Dev` for the earlier merged steps that touch the same files (`git show origin/Dev:handoffs/BN.md`). Note in your handoff any deviation that affects them.
 - Follow the matching entries in `BEST_PRACTICES.md`. Use `ctx7` for library docs, as `CLAUDE.md` describes.
 - After code changes, run `graphify update .`.
 - Before handing to review: run the step's verification check and the test suite. Open a PR into `Dev` with: board step, files touched, commands run and results, anything left out on purpose. Write `handoffs/BN.md` on the step branch (format below) and commit it with the PR. The PR opening sets the board to `review`, so don't edit the board yourself.
@@ -94,7 +95,7 @@ Rules:
 
 ## Zed (reviewer) rules
 
-- Review only a step whose PR is open. In your worktree: `git fetch && git checkout bN-... && git pull`.
+- Review only a step whose PR is open. In your worktree: `git fetch origin && git checkout --detach origin/bN-...`. Use a detached checkout, because the builder's worktree has the branch checked out. Read the builder's `handoffs/BN.md` from that branch before you review. It isn't on `Dev` until the merge.
 - Check each item and post the result on the PR (`gh pr review` or `gh pr comment`):
   - [ ] The step's verification check and tests pass when re-run.
   - [ ] Every substep is ticked in `handoffs/BN.md`, and its done-check result is written there too.
