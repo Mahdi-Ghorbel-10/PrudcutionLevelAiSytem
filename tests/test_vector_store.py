@@ -45,6 +45,53 @@ def test_existing_ids_reports_only_stored_chunks(tmp_path: Path) -> None:
     assert store.existing_ids([chunk_id(stored), chunk_id(missing)]) == {chunk_id(stored)}
 
 
+def test_query_returns_the_nearest_chunk_first(tmp_path: Path) -> None:
+    store = VectorStore(tmp_path / "chroma", "test")
+    near = _chunk("Near chunk.")
+    middle = _chunk("Middle chunk.")
+    far = _chunk("Far chunk.")
+    store.upsert(
+        [near, middle, far],
+        [[1.0, 0.0, 0.0], [0.6, 0.8, 0.0], [0.0, 0.0, 1.0]],
+    )
+
+    results = store.query([0.9, 0.1, 0.0], k=3)
+
+    assert [hit.text for hit in results] == ["Near chunk.", "Middle chunk.", "Far chunk."]
+
+
+def test_query_returns_raw_text_source_page_and_heading(tmp_path: Path) -> None:
+    store = VectorStore(tmp_path / "chroma", "test")
+    paged = Chunk(
+        text="Parental leave is twelve weeks.",
+        source="manual.pdf",
+        page=3,
+        heading_path="Leave",
+        embed_text="Leave\nParental leave is twelve weeks.",
+    )
+    store.upsert([paged], [[1.0, 0.0, 0.0]])
+
+    [hit] = store.query([1.0, 0.0, 0.0], k=1)
+
+    assert hit.text == "Parental leave is twelve weeks."
+    assert (hit.source, hit.page, hit.heading_path) == ("manual.pdf", 3, "Leave")
+
+
+def test_query_maps_no_page_back_to_none(tmp_path: Path) -> None:
+    store = VectorStore(tmp_path / "chroma", "test")
+    store.upsert([_chunk("No page here.")], [[1.0, 0.0, 0.0]])
+
+    [hit] = store.query([1.0, 0.0, 0.0], k=1)
+
+    assert hit.page is None
+
+
+def test_query_on_an_empty_store_returns_nothing(tmp_path: Path) -> None:
+    store = VectorStore(tmp_path / "chroma", "test")
+
+    assert store.query([1.0, 0.0, 0.0], k=5) == []
+
+
 def test_indexed_texts_returns_embed_text_for_each_chunk(tmp_path: Path) -> None:
     store = VectorStore(tmp_path / "chroma", "test")
     chunk = _chunk("Five days a year.", embed_text="Leave Policy > Sick leave\nFive days a year.")

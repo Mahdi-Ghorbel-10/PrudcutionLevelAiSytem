@@ -41,6 +41,10 @@ class Embedder:
         )
         return [[float(value) for value in vector] for vector in vectors]
 
+    def embed_query(self, text: str) -> list[float]:
+        """Embed one query string the same way as chunks."""
+        return self.embed_texts([text])[0]
+
     def embed_chunks(self, chunks: list[Chunk]) -> list[list[float]]:
         """Embed each chunk's ``embed_text``."""
         return self.embed_texts([chunk.embed_text for chunk in chunks])
