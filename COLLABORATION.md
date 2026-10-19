@@ -87,6 +87,7 @@ Rules:
 - Before the spec: draft `specs/Bx-<name>.md` from the template, then ask the user to set the step to `spec`. Wait for approval.
 - Before coding: the spec is `approved`. `git fetch`, cut `bN-<short-name>` from `origin/Dev`, and push the branch. The workflow sets the step to `doing` when the spec on the branch says `approved`.
 - Build substep by substep. One commit per substep, prefixed `BN: ...`, with the Co-Authored-By trailer. Tick the substep's box in `handoffs/BN.md` and push the step branch after each commit.
+- Only commit to your own step's branch, and prefix each commit with that step's ID. If you start a new step, cut its branch from `origin/Dev` first, not from the current step's branch.
 - Before building, read `handoffs/*.md` on `origin/Dev` for the earlier merged steps that touch the same files (`git show origin/Dev:handoffs/BN.md`). Note in your handoff any deviation that affects them.
 - Follow the matching entries in `BEST_PRACTICES.md`. Use `ctx7` for library docs, as `CLAUDE.md` describes.
 - After code changes, run `graphify update .`.
