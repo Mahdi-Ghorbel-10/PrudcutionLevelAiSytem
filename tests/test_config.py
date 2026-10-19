@@ -15,6 +15,14 @@ ingestion:
   collection_name: chunks
   embedding_model: BAAI/bge-small-en-v1.5
   embed_batch_size: 32
+retrieval:
+  mode: hybrid_rerank
+  dense_top_k: 20
+  bm25_top_k: 20
+  rrf_k: 60
+  fused_top_k: 10
+  rerank_top_k: 4
+  rerank_model: cross-encoder/ms-marco-MiniLM-L-6-v2
 """
 
 
@@ -50,6 +58,38 @@ def test_overlap_must_be_smaller_than_chunk_size(
     text = TUNABLES_YAML.replace("chunk_overlap_chars: 100", "chunk_overlap_chars: 800")
 
     with pytest.raises(ValidationError):
+        load_config(_write_tunables(tmp_path, text), env_file=None)
+
+
+def test_retrieval_defaults_load(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LLM_BASE_URL", "http://localhost:8080/v1")
+
+    config = load_config(_write_tunables(tmp_path), env_file=None)
+
+    retrieval = config.tunables.retrieval
+    assert retrieval.mode == "hybrid_rerank"
+    assert (retrieval.dense_top_k, retrieval.bm25_top_k) == (20, 20)
+    assert (retrieval.fused_top_k, retrieval.rerank_top_k) == (10, 4)
+    assert retrieval.rrf_k == 60
+
+
+def test_unknown_retrieval_mode_fails_at_startup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LLM_BASE_URL", "http://localhost:8080/v1")
+    text = TUNABLES_YAML.replace("mode: hybrid_rerank", "mode: bogus")
+
+    with pytest.raises(ValidationError, match="hybrid_rerank"):
+        load_config(_write_tunables(tmp_path, text), env_file=None)
+
+
+def test_fused_top_k_larger_than_the_candidates_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LLM_BASE_URL", "http://localhost:8080/v1")
+    text = TUNABLES_YAML.replace("fused_top_k: 10", "fused_top_k: 41")
+
+    with pytest.raises(ValidationError, match="fused_top_k must not exceed"):
         load_config(_write_tunables(tmp_path, text), env_file=None)
 
 

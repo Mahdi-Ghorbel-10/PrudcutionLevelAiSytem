@@ -8,6 +8,7 @@ Both are validated when loaded, so a missing required value stops the app at sta
 """
 
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
@@ -32,11 +33,33 @@ class IngestionTunables(BaseModel):
         return self
 
 
+RetrievalMode = Literal["dense", "bm25", "hybrid", "hybrid_rerank"]
+
+
+class RetrievalTunables(BaseModel):
+    """The ``retrieval`` section of ``config.yaml``. ``mode`` selects which stages run."""
+
+    mode: RetrievalMode
+    dense_top_k: int = Field(gt=0)
+    bm25_top_k: int = Field(gt=0)
+    rrf_k: int = Field(gt=0)
+    fused_top_k: int = Field(gt=0)
+    rerank_top_k: int = Field(gt=0)
+    rerank_model: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _fused_fits_the_candidates(self) -> "RetrievalTunables":
+        if self.fused_top_k > self.dense_top_k + self.bm25_top_k:
+            raise ValueError("fused_top_k must not exceed dense_top_k + bm25_top_k")
+        return self
+
+
 class Tunables(BaseModel):
     """Values from ``config.yaml``."""
 
     llm_timeout_seconds: float = Field(gt=0)
     ingestion: IngestionTunables
+    retrieval: RetrievalTunables
 
 
 class Settings(BaseSettings):

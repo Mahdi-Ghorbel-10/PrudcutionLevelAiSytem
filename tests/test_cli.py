@@ -19,6 +19,14 @@ ingestion:
   collection_name: chunks
   embedding_model: unused
   embed_batch_size: 8
+retrieval:
+  mode: hybrid
+  dense_top_k: 20
+  bm25_top_k: 20
+  rrf_k: 60
+  fused_top_k: 10
+  rerank_top_k: 4
+  rerank_model: unused
 """
 
 

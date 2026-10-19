@@ -10,12 +10,13 @@ to the RRF order (decision D4).
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Literal, Protocol
+from typing import Protocol
 
+from rag_agent.config import RetrievalMode
 from rag_agent.retrieval.bm25 import BM25Index
 from rag_agent.retrieval.vector_store import StoredChunk, VectorStore
 
-Mode = Literal["dense", "bm25", "hybrid", "hybrid_rerank"]
+Mode = RetrievalMode
 
 
 class QueryEmbedder(Protocol):
