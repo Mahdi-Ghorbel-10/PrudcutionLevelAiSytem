@@ -1,0 +1,5 @@
+VPN setup
+
+Install the corporate VPN client from the software portal. Sign in with your work account and approve the prompt on your phone.
+
+If the client reports a certificate error, restart the machine and try again. The helpdesk can reissue the certificate with the meadowsprint reset tool.

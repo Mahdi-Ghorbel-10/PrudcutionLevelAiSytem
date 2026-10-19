@@ -5,10 +5,22 @@ from pydantic import ValidationError
 
 from rag_agent.config import load_config
 
+TUNABLES_YAML = """\
+llm_timeout_seconds: 12
+ingestion:
+  chunk_size_chars: 800
+  chunk_overlap_chars: 100
+  embed_with_heading: true
+  chroma_path: data/chroma
+  collection_name: chunks
+  embedding_model: BAAI/bge-small-en-v1.5
+  embed_batch_size: 32
+"""
 
-def _write_tunables(tmp_path: Path) -> Path:
+
+def _write_tunables(tmp_path: Path, text: str = TUNABLES_YAML) -> Path:
     path = tmp_path / "config.yaml"
-    path.write_text("llm_timeout_seconds: 12\n", encoding="utf-8")
+    path.write_text(text, encoding="utf-8")
     return path
 
 
@@ -23,6 +35,22 @@ def test_loads_yaml_tunables_and_env_settings(
     assert config.settings.llm_base_url == "http://localhost:8080/v1"
     assert config.settings.llm_model == "local"
     assert config.tunables.llm_timeout_seconds == 12
+    assert config.tunables.ingestion.chunk_size_chars == 800
+    assert config.tunables.ingestion.chunk_overlap_chars == 100
+    assert config.tunables.ingestion.embed_with_heading is True
+    assert config.tunables.ingestion.chroma_path == Path("data/chroma")
+    assert config.tunables.ingestion.collection_name == "chunks"
+    assert config.tunables.ingestion.embedding_model == "BAAI/bge-small-en-v1.5"
+
+
+def test_overlap_must_be_smaller_than_chunk_size(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("LLM_BASE_URL", "http://localhost:8080/v1")
+    text = TUNABLES_YAML.replace("chunk_overlap_chars: 100", "chunk_overlap_chars: 800")
+
+    with pytest.raises(ValidationError):
+        load_config(_write_tunables(tmp_path, text), env_file=None)
 
 
 def test_missing_required_env_fails_fast(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -41,8 +69,7 @@ def test_empty_required_env_fails_fast(tmp_path: Path, monkeypatch: pytest.Monke
 
 def test_non_positive_timeout_fails_fast(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LLM_BASE_URL", "http://localhost:8080/v1")
-    path = tmp_path / "config.yaml"
-    path.write_text("llm_timeout_seconds: 0\n", encoding="utf-8")
+    text = TUNABLES_YAML.replace("llm_timeout_seconds: 12", "llm_timeout_seconds: 0")
 
     with pytest.raises(ValidationError):
-        load_config(path, env_file=None)
+        load_config(_write_tunables(tmp_path, text), env_file=None)

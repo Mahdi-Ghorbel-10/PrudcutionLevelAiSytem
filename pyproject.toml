@@ -4,9 +4,19 @@ version = "0.1.0"
 description = "Agentic RAG platform: LangGraph agent, hybrid retrieval, evals, and a production web stack."
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "chromadb>=1.5.9",
     "pydantic-settings>=2.5",
+    "pypdf>=6.21.1",
+    "python-docx>=1.2.0",
     "pyyaml>=6.0",
+    "rank-bm25>=0.2.2",
+    "sentence-transformers>=6.1.0",
+    "torch>=2.14.1",
+    "typer>=0.27.3",
 ]
+
+[project.scripts]
+rag = "rag_agent.cli:main"
 
 [dependency-groups]
 dev = [
@@ -35,5 +45,22 @@ strict = true
 files = ["src", "tests"]
 python_version = "3.11"
 
+[[tool.mypy.overrides]]
+module = ["rank_bm25"]  # no type stubs published for this package
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Slow tests load the real embedding model. CI and the default run skip them. Run them with
+# `uv run pytest -m slow`, which overrides this default.
+addopts = "-m 'not slow'"
+markers = ["slow: loads a real model; skipped by default and in CI"]
+
+# CPU-only torch. The default index pulls the CUDA build, about 5 GB (decision D5).
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

@@ -6,3 +6,6 @@ __pycache__/
 .env
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Ingestion output (rebuilt from raw files, never committed)
+data/chroma/
