@@ -11,6 +11,8 @@ ingestion:
   chunk_size_chars: 800
   chunk_overlap_chars: 100
   embed_with_heading: true
+  chroma_path: data/chroma
+  collection_name: chunks
 """
 
 
@@ -34,6 +36,8 @@ def test_loads_yaml_tunables_and_env_settings(
     assert config.tunables.ingestion.chunk_size_chars == 800
     assert config.tunables.ingestion.chunk_overlap_chars == 100
     assert config.tunables.ingestion.embed_with_heading is True
+    assert config.tunables.ingestion.chroma_path == Path("data/chroma")
+    assert config.tunables.ingestion.collection_name == "chunks"
 
 
 def test_overlap_must_be_smaller_than_chunk_size(

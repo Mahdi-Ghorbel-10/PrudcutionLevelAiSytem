@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Agentic RAG platform: LangGraph agent, hybrid retrieval, evals, and a production web stack."
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "chromadb>=1.5.9",
     "pydantic-settings>=2.5",
     "pypdf>=6.21.1",
     "python-docx>=1.2.0",

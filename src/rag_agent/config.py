@@ -20,6 +20,8 @@ class IngestionTunables(BaseModel):
     chunk_size_chars: int = Field(gt=0)
     chunk_overlap_chars: int = Field(ge=0)
     embed_with_heading: bool
+    chroma_path: Path
+    collection_name: str = Field(min_length=1)
 
     @model_validator(mode="after")
     def _overlap_is_smaller_than_chunk(self) -> "IngestionTunables":

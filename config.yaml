@@ -6,3 +6,5 @@ ingestion:
   chunk_overlap_chars: 100
   # Prepend the heading path to the text that is embedded. B7 compares true and false.
   embed_with_heading: true
+  chroma_path: data/chroma
+  collection_name: chunks
