@@ -20,6 +20,9 @@ class Document:
     page: int | None  # 1-based for PDF pages, None for formats without pages
 
 
+SUPPORTED_SUFFIXES = frozenset({".txt", ".md", ".pdf", ".docx"})
+
+
 def load_file(path: Path) -> list[Document]:
     """Load one supported file. Raises ``ValueError`` for an unsupported file type."""
     suffix = path.suffix.lower()
