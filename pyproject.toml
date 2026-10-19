@@ -5,6 +5,8 @@ description = "Agentic RAG platform: LangGraph agent, hybrid retrieval, evals, a
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "pydantic-settings>=2.5",
+    "pypdf>=6.21.1",
+    "python-docx>=1.2.0",
     "pyyaml>=6.0",
 ]
 
