@@ -1,9 +1,12 @@
+from collections.abc import Sequence
 from pathlib import Path
+
+import pytest
 
 from rag_agent.ingestion.chunker import Chunk
 from rag_agent.retrieval.bm25 import BM25Index
-from rag_agent.retrieval.hybrid import HybridRetriever, Mode, rrf_fuse
-from rag_agent.retrieval.vector_store import VectorStore
+from rag_agent.retrieval.hybrid import HybridRetriever, Mode, Reranking, rrf_fuse
+from rag_agent.retrieval.vector_store import StoredChunk, VectorStore
 
 COUNT = 15
 ZEBRA = 7  # the only chunk that contains the keyword "zebra"
@@ -47,12 +50,34 @@ def _store(tmp_path: Path) -> VectorStore:
     return store
 
 
+class RaisingEmbedder:
+    def embed_query(self, text: str) -> list[float]:
+        raise RuntimeError("embedder is down")
+
+
+class ReversingReranker:
+    """Puts the candidates in reverse order, so the test can see that the reranker ran."""
+
+    def rerank(
+        self, query: str, candidates: Sequence[StoredChunk], top_k: int
+    ) -> list[tuple[StoredChunk, float]]:
+        return [(chunk, float(i)) for i, chunk in enumerate(reversed(candidates))][:top_k]
+
+
+class RaisingReranker:
+    def rerank(
+        self, query: str, candidates: Sequence[StoredChunk], top_k: int
+    ) -> list[tuple[StoredChunk, float]]:
+        raise RuntimeError("reranker is down")
+
+
 def _retriever(
     store: VectorStore,
-    embedder: SpyEmbedder,
+    embedder: SpyEmbedder | RaisingEmbedder,
     index: BM25Index,
     mode: Mode,
     fused_top_k: int = 10,
+    reranker: Reranking | None = None,
 ) -> HybridRetriever:
     return HybridRetriever(
         store=store,
@@ -63,6 +88,8 @@ def _retriever(
         bm25_top_k=20,
         rrf_k=60,
         fused_top_k=fused_top_k,
+        reranker=reranker,
+        rerank_top_k=4,
     )
 
 
@@ -120,3 +147,54 @@ def test_hybrid_lifts_the_keyword_match_into_the_results(tmp_path: Path) -> None
 
     texts = [hit.chunk.text for hit in result.hits]
     assert "Document mentions zebra." in texts
+
+
+def test_clean_run_reports_no_degraded_stages(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    retriever = _retriever(store, SpyEmbedder(), BM25Index(), "hybrid")
+
+    assert retriever.retrieve("zebra").degraded == []
+
+
+def test_embedder_failure_falls_back_to_bm25_only(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    retriever = _retriever(store, RaisingEmbedder(), BM25Index(), "hybrid")
+
+    result = retriever.retrieve("zebra")
+
+    assert result.degraded == ["embedder"]
+    assert [hit.chunk.text for hit in result.hits] == ["Document mentions zebra."]
+
+
+def test_reranker_failure_returns_the_rrf_order(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    index = BM25Index()
+    rrf_only = _retriever(store, SpyEmbedder(), index, "hybrid").retrieve("zebra")
+    retriever = _retriever(store, SpyEmbedder(), index, "hybrid_rerank", reranker=RaisingReranker())
+
+    result = retriever.retrieve("zebra")
+
+    assert result.degraded == ["reranker"]
+    assert [hit.chunk.identifier for hit in result.hits] == [
+        hit.chunk.identifier for hit in rrf_only.hits[:4]
+    ]
+
+
+def test_hybrid_rerank_uses_the_reranker_order(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+    retriever = _retriever(
+        store, SpyEmbedder(), BM25Index(), "hybrid_rerank", reranker=ReversingReranker()
+    )
+
+    result = retriever.retrieve("zebra")
+
+    assert result.degraded == []
+    assert len(result.hits) == 4
+    assert result.hits[0].score == 0.0
+
+
+def test_hybrid_rerank_without_a_reranker_is_rejected(tmp_path: Path) -> None:
+    store = _store(tmp_path)
+
+    with pytest.raises(ValueError, match="needs a reranker"):
+        _retriever(store, SpyEmbedder(), BM25Index(), "hybrid_rerank")

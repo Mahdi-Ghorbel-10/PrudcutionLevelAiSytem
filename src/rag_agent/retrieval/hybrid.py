@@ -2,10 +2,14 @@
 
 ``HybridRetriever.retrieve`` runs the stages that its ``mode`` names. Each stage is separate,
 so the same code path serves the ablations in B7 (decision D3).
+
+When a stage fails, the query still returns results. The failed stage is named in
+``RetrievalResult.degraded``: the embedder falls back to BM25 alone, and the reranker falls back
+to the RRF order (decision D4).
 """
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal, Protocol
 
 from rag_agent.retrieval.bm25 import BM25Index
@@ -20,6 +24,14 @@ class QueryEmbedder(Protocol):
     def embed_query(self, text: str) -> list[float]: ...
 
 
+class Reranking(Protocol):
+    """The part of the reranker that retrieval needs."""
+
+    def rerank(
+        self, query: str, candidates: Sequence[StoredChunk], top_k: int
+    ) -> list[tuple[StoredChunk, float]]: ...
+
+
 @dataclass(frozen=True)
 class RetrievalHit:
     """One chunk in a result, with the score of the stage that ranked it."""
@@ -30,9 +42,10 @@ class RetrievalHit:
 
 @dataclass(frozen=True)
 class RetrievalResult:
-    """The hits for one query, best first."""
+    """The hits for one query, best first. ``degraded`` names stages that failed (empty if none)."""
 
     hits: list[RetrievalHit]
+    degraded: list[str] = field(default_factory=list)
 
 
 def rrf_fuse(rankings: Sequence[Sequence[str]], k: int) -> list[tuple[str, float]]:
@@ -49,7 +62,7 @@ def rrf_fuse(rankings: Sequence[Sequence[str]], k: int) -> list[tuple[str, float
 
 
 class HybridRetriever:
-    """Retrieves chunks by dense search, BM25, or both fused with RRF."""
+    """Retrieves chunks by dense search, BM25, or both fused with RRF, then optionally reranks."""
 
     def __init__(
         self,
@@ -61,7 +74,11 @@ class HybridRetriever:
         bm25_top_k: int,
         rrf_k: int,
         fused_top_k: int,
+        reranker: Reranking | None = None,
+        rerank_top_k: int = 4,
     ) -> None:
+        if mode == "hybrid_rerank" and reranker is None:
+            raise ValueError("mode hybrid_rerank needs a reranker")
         self._store = store
         self._embedder = embedder
         self._keyword_index = keyword_index
@@ -70,26 +87,49 @@ class HybridRetriever:
         self._bm25_top_k = bm25_top_k
         self._rrf_k = rrf_k
         self._fused_top_k = fused_top_k
+        self._reranker = reranker
+        self._rerank_top_k = rerank_top_k
         # BM25 is built from the stored embed_text, so keyword search sees what the vectors saw.
         self._keyword_index.build(store.indexed_texts())
 
     def retrieve(self, query: str) -> RetrievalResult:
+        degraded: list[str] = []
+        ranking = self._first_stage(query, degraded)
+        hits = self._hits(ranking[: self._fused_top_k])
+        if self._mode == "hybrid_rerank":
+            hits = self._rerank(query, hits, degraded)
+        return RetrievalResult(hits=hits, degraded=degraded)
+
+    def _first_stage(self, query: str, degraded: list[str]) -> list[tuple[str, float]]:
+        """Rank candidates with the stages the mode needs. Falls back to BM25 if embedding fails."""
+        if self._mode == "bm25":
+            return self._keyword_index.search(query, self._bm25_top_k)
+        vector = self._embed(query, degraded)
+        if vector is None:
+            return self._keyword_index.search(query, self._bm25_top_k)
+        dense_ids = [chunk.identifier for chunk in self._store.query(vector, self._dense_top_k)]
         if self._mode == "dense":
-            ranking = self._dense_ranking(query)
-        elif self._mode == "bm25":
-            ranking = self._keyword_index.search(query, self._bm25_top_k)
-        elif self._mode == "hybrid":
-            ranking = rrf_fuse([self._dense_ids(query), self._keyword_ids(query)], self._rrf_k)
-        else:
-            raise NotImplementedError("hybrid_rerank arrives with the reranker (substep 4)")
-        return RetrievalResult(hits=self._hits(ranking[: self._fused_top_k]))
+            return rrf_fuse([dense_ids], self._rrf_k)
+        return rrf_fuse([dense_ids, self._keyword_ids(query)], self._rrf_k)
 
-    def _dense_ranking(self, query: str) -> list[tuple[str, float]]:
-        return rrf_fuse([self._dense_ids(query)], self._rrf_k)
+    def _embed(self, query: str, degraded: list[str]) -> list[float] | None:
+        try:
+            return self._embedder.embed_query(query)
+        except Exception:  # any embedder failure degrades the query to BM25 alone
+            degraded.append("embedder")
+            return None
 
-    def _dense_ids(self, query: str) -> list[str]:
-        vector = self._embedder.embed_query(query)
-        return [chunk.identifier for chunk in self._store.query(vector, self._dense_top_k)]
+    def _rerank(
+        self, query: str, hits: list[RetrievalHit], degraded: list[str]
+    ) -> list[RetrievalHit]:
+        if self._reranker is None:
+            raise RuntimeError("hybrid_rerank without a reranker")
+        try:
+            ranked = self._reranker.rerank(query, [hit.chunk for hit in hits], self._rerank_top_k)
+        except Exception:  # any reranker failure keeps the RRF order
+            degraded.append("reranker")
+            return hits[: self._rerank_top_k]
+        return [RetrievalHit(chunk=chunk, score=score) for chunk, score in ranked]
 
     def _keyword_ids(self, query: str) -> list[str]:
         return [identifier for identifier, _ in self._keyword_index.search(query, self._bm25_top_k)]
