@@ -8,7 +8,7 @@ Design context: `PLAN.md` → Architecture ("Key design decisions": IngestionPip
 `rag ingest <path>` reads txt, md, pdf and docx files, splits them into chunks that keep their source, page and heading path, embeds them into a local Chroma store, and rebuilds an in-memory BM25 index. Running the same ingest twice changes nothing. After this step, a keyword query finds the right chunk in the sample documents.
 
 ## Substeps
-Each substep is one commit and one testable behaviour. Tick a box only when its done-check passes.
+Each substep is one commit and one testable behaviour. The builder ticks it in `handoffs/B2.md`, with its done-check result, only when the check passes. The boxes in this spec stay unticked.
 
 - [ ] **1. Loaders.** Files: `src/rag_agent/ingestion/loaders.py` (returns `Document(text, source, page)` for txt, md, pdf (pypdf, one document per page) and docx (python-docx)), `tests/fixtures/` (one small pdf and one docx, under 20 KB each). Done-check: unit tests load each format and check the text and page numbers.
 - [ ] **2. Chunker.** Files: `src/rag_agent/ingestion/chunker.py`. Splits on headings, then paragraphs, then sentences, to a size from `config.yaml` with overlap. Each chunk keeps `source`, `page` and `heading_path`, and gets an `embed_text` per D7 (the heading path and the text when `embed_with_heading` is true, otherwise the text alone). Done-check: unit tests check size limits, overlap, that a heading path follows nested headings, and that `embed_text` starts with the heading path only when the flag is on.
