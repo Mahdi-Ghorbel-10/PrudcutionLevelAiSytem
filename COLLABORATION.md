@@ -49,7 +49,7 @@ A worktree can't check out `Dev` while the main checkout is on it, so both use `
 - Specs live on `Dev`. The orchestrator drafts them in the `main/` checkout, and the builder and reviewer read them from `origin/Dev`. A spec reaches `Dev` when the user approves it and the orchestrator commits it, with the user's OK.
 - Spec status moves `draft` → `approved` → `building` → `review` → `done`. The builder writes no code until the spec is `approved`.
 - The user approves a spec by ticking its **Decisions needing approval**. Anything not in the decisions list can be settled by the builder, as long as it fits the spec.
-- Each substep is one commit. Tick its box only when its done-check passes, and put the result in the handoff.
+- Each substep is one commit. The builder ticks its box in `handoffs/BN.md` only when its done-check passes, and writes the result next to it. The spec on `Dev` stays as approved. Its checkboxes are not ticked.
 - To change a spec after approval, the orchestrator edits it on `Dev` with the user's OK and adds a Change log line. The builder asks for a change in its handoff, not by editing the spec. Design-level changes go in the Decisions log of `PLAN.md` too.
 - The reviewer checks the code against the spec's substeps and "Done when". The tutor uses the spec and the merged code for the quiz.
 
@@ -86,7 +86,7 @@ Rules:
 
 - Before the spec: draft `specs/Bx-<name>.md` from the template, then ask the user to set the step to `spec`. Wait for approval.
 - Before coding: the spec is `approved`. `git fetch`, cut `bN-<short-name>` from `origin/Dev`, and push the branch. The workflow sets the step to `doing` when the spec on the branch says `approved`.
-- Build substep by substep. One commit per substep, prefixed `BN: ...`, with the Co-Authored-By trailer. Tick the substep's box in the spec and push the step branch after each commit.
+- Build substep by substep. One commit per substep, prefixed `BN: ...`, with the Co-Authored-By trailer. Tick the substep's box in `handoffs/BN.md` and push the step branch after each commit.
 - Follow the matching entries in `BEST_PRACTICES.md`. Use `ctx7` for library docs, as `CLAUDE.md` describes.
 - After code changes, run `graphify update .`.
 - Before handing to review: run the step's verification check and the test suite. Open a PR into `Dev` with: board step, files touched, commands run and results, anything left out on purpose. Write `handoffs/BN.md` on the step branch (format below) and commit it with the PR. The PR opening sets the board to `review`, so don't edit the board yourself.
@@ -97,7 +97,7 @@ Rules:
 - Review only a step whose PR is open. In your worktree: `git fetch && git checkout bN-... && git pull`.
 - Check each item and post the result on the PR (`gh pr review` or `gh pr comment`):
   - [ ] The step's verification check and tests pass when re-run.
-  - [ ] Every substep in the spec is ticked, and its done-check result is in the handoff.
+  - [ ] Every substep is ticked in `handoffs/BN.md`, and its done-check result is written there too.
   - [ ] It does what the spec says. The spec matches `PLAN.md`; deviations are in the Decisions log.
   - [ ] It follows the matching entries in `BEST_PRACTICES.md`.
   - [ ] No secrets, keys or `.env` content committed. No model files or indexes committed.
