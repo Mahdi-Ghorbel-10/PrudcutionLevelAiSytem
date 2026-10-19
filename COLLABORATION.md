@@ -138,7 +138,7 @@ Rules:
 |---|---|---|---|---|---|---|---|
 | B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | merged | claude-code | zed | #1 | true | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). CI green on PR #1. |
 | B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | merged | claude-code | zed | #3 | false |  |
-| B3 | Hybrid retrieval, RRF, reranker, unit tests | doing | claude-code | — | — | false |  |
+| B3 | Hybrid retrieval, RRF, reranker, unit tests | review | claude-code | zed | #4 | false |  |
 | B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | false |  |
 | B5 | Phoenix tracing | todo | — | — | — | false |  |
 | B6 | FastAPI (`/health`, `/ready`, `/query`) + `api` image, `docker compose up` | todo | — | — | — | false |  |
