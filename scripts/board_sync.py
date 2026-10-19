@@ -142,17 +142,15 @@ def push_changes(
     payload: dict[str, object],
     has_open_pr: Callable[[str], bool],
     spec_status: Callable[[str, str], str | None],
+    changed_files: Callable[[str, str], list[str]],
 ) -> list[Change]:
     ref = str(payload["ref"]).removeprefix("refs/heads/")
     if ref == "Dev":
         steps: list[str] = []
-        commits = payload["commits"]
-        assert isinstance(commits, list)
-        for commit in commits:
-            for path in commit["added"] + commit["modified"]:
-                match = QUIZ_FILE.match(path)
-                if match and match.group(1) not in steps:
-                    steps.append(match.group(1))
+        for path in changed_files(str(payload["before"]), str(payload["after"])):
+            match = QUIZ_FILE.match(path)
+            if match and match.group(1) not in steps:
+                steps.append(match.group(1))
         return [(step, {"quiz_ready": "true"}) for step in steps]
     step = step_from_branch(ref)
     if step is None:
@@ -169,13 +167,14 @@ def updates_for_event(
     payload: dict[str, object],
     has_open_pr: Callable[[str], bool],
     spec_status: Callable[[str, str], str | None],
+    changed_files: Callable[[str, str], list[str]],
 ) -> list[Change]:
     if name == "pull_request":
         return pull_request_changes(payload)
     if name == "pull_request_review":
         return review_changes(payload)
     if name == "push":
-        return push_changes(payload, has_open_pr, spec_status)
+        return push_changes(payload, has_open_pr, spec_status, changed_files)
     return []
 
 
@@ -194,6 +193,10 @@ def has_open_pr(branch: str) -> bool:
     return bool(json.loads(out))
 
 
+def changed_files(before: str, after: str) -> list[str]:
+    return git("diff", "--name-only", before, after).splitlines()
+
+
 def spec_status(branch: str, step: str) -> str | None:
     files = git("ls-tree", "-r", "--name-only", f"origin/{branch}", "--", "specs/")
     matches = [path for path in files.splitlines() if path.startswith(f"specs/{step}-")]
@@ -208,7 +211,9 @@ def spec_status(branch: str, step: str) -> str | None:
 
 def event_mode(path: Path) -> None:
     payload = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
-    changes = updates_for_event(os.environ["GITHUB_EVENT_NAME"], payload, has_open_pr, spec_status)
+    changes = updates_for_event(
+        os.environ["GITHUB_EVENT_NAME"], payload, has_open_pr, spec_status, changed_files
+    )
     text = path.read_text(encoding="utf-8")
     for step, updates in changes:
         text = set_cells(text, step, updates)
