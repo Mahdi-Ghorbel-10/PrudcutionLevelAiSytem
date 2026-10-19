@@ -51,6 +51,10 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Slow tests load the real embedding model. CI and the default run skip them. Run them with
+# `uv run pytest -m slow`, which overrides this default.
+addopts = "-m 'not slow'"
+markers = ["slow: loads a real model; skipped by default and in CI"]
 
 # CPU-only torch. The default index pulls the CUDA build, about 5 GB (decision D5).
 [[tool.uv.index]]
