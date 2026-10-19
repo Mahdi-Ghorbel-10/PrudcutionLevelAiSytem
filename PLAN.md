@@ -9,6 +9,7 @@ Design decisions for this project. Collaboration decisions are in `COLLABORATION
 - 2026-10-18: `main` is replaced by `Dev` in CI/CD and branch protection.
 - 2026-10-18: The API prefix is `/api/v1/` (from `BEST_PRACTICES.md` Step 1).
 - 2026-10-18: B4 includes the `pipeline: vanilla | agent` flag, which the B7 ablation needs. Complexity routing is deferred until after B7.
+- 2026-10-19: Chunks are embedded with their heading path (B2 D7, flag `embed_with_heading` in `config.yaml`). The stored document stays the raw text, and BM25 indexes the same embedded text. B7 compares with and without the flag.
 
 ### Open questions for the user
 - None on design. Collaboration questions are in `COLLABORATION.md`.

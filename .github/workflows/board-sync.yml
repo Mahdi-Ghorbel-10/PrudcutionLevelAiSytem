@@ -1,72 +1,89 @@
 name: Board sync
 
-# When a build-step PR merges into Dev, set that step's status to "merged" on the board.
-# The step id comes from the branch name (bN-<name>), or from the input when run by hand.
+# Keeps the build-step rows of the board in COLLABORATION.md in step with GitHub.
+# The rules live in scripts/board_sync.py:
+#   branch pushed (spec approved)   -> doing
+#   PR opened or ready              -> review (reviewer from the reviewer:<name> label, default zed)
+#   review submitted                -> notes: approved / changes requested
+#   push to the branch with a PR    -> review, notes cleared
+#   PR merged                       -> merged
+#   quiz file added to Dev          -> quiz_ready true
+# Run by hand with workflow_dispatch to set any column (for example spec or blocked).
 on:
   pull_request:
-    types: [closed]
+    types: [opened, reopened, ready_for_review, labeled, closed]
     branches: [Dev]
+  pull_request_review:
+    types: [submitted]
+    branches: [Dev]
+  push:
+    branches: [Dev, 'b*-*']
   workflow_dispatch:
     inputs:
       step:
-        description: 'Build step to mark merged, e.g. B1'
+        description: 'Build step to update, e.g. B2'
         required: true
+        type: string
+      status:
+        description: 'New status: todo, spec, doing, review, merged or blocked. Empty to skip.'
+        required: false
+        default: ''
+        type: string
+      notes:
+        description: 'New notes text. Empty to skip.'
+        required: false
+        default: ''
         type: string
 
 permissions:
   contents: write
+  pull-requests: read
 
-# One sync at a time, so two merges cannot race on the same file.
+# One sync at a time, so two events cannot race on the same file.
 concurrency:
   group: board-sync
   cancel-in-progress: false
 
 jobs:
-  mark-merged:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+  sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           ref: Dev
+          # Full history, so git diff can read the files between a push's before and after.
+          fetch-depth: 0
 
-      - name: Resolve the build step
-        id: step
+      - name: Fetch the step branches
+        run: git fetch --quiet origin
+
+      - name: Update the board
         env:
-          INPUT_STEP: ${{ inputs.step }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          GH_TOKEN: ${{ github.token }}
+          MANUAL_STEP: ${{ inputs.step }}
+          MANUAL_STATUS: ${{ inputs.status }}
+          MANUAL_NOTES: ${{ inputs.notes }}
         run: |
-          if [ -n "$INPUT_STEP" ]; then
-            step="$INPUT_STEP"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            args=("$MANUAL_STEP")
+            if [ -n "$MANUAL_STATUS" ]; then args+=("status=$MANUAL_STATUS"); fi
+            if [ -n "$MANUAL_NOTES" ]; then args+=("notes=$MANUAL_NOTES"); fi
+            python3 scripts/board_sync.py COLLABORATION.md "${args[@]}"
           else
-            step="$(echo "$HEAD_REF" | sed -n -E 's/^b([0-9]+)-.*/B\1/p')"
+            python3 scripts/board_sync.py --event COLLABORATION.md
           fi
-          if [ -z "$step" ]; then
-            echo "Not a build-step branch ($HEAD_REF). Nothing to do."
-          elif ! echo "$step" | grep -qE '^B[0-9]+$'; then
-            echo "error: step must look like B1, got '$step'" >&2
-            exit 1
-          fi
-          echo "step=$step" >> "$GITHUB_OUTPUT"
-
-      - name: Mark the step merged on the board
-        if: steps.step.outputs.step != ''
-        env:
-          STEP: ${{ steps.step.outputs.step }}
-        run: python3 scripts/board_sync.py COLLABORATION.md "$STEP" merged
 
       - name: Commit and push to Dev
-        if: steps.step.outputs.step != ''
         env:
-          STEP: ${{ steps.step.outputs.step }}
+          EVENT: ${{ github.event_name }}
         run: |
           if git diff --quiet -- COLLABORATION.md; then
-            echo "Board already up to date for $STEP."
+            echo "Board already up to date."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add COLLABORATION.md
-          git commit -m "Board: $STEP merged"
+          git commit -m "Board: update from $EVENT"
           git pull --rebase origin Dev
           git push origin HEAD:Dev
