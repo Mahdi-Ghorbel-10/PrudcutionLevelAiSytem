@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from docx import Document as DocxDocument
+from docx.text.paragraph import Paragraph
 from pypdf import PdfReader
 
 
@@ -41,5 +42,15 @@ def _load_pdf(path: Path) -> list[Document]:
 
 def _load_docx(path: Path) -> list[Document]:
     document = DocxDocument(str(path))
-    text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+    text = "\n".join(_docx_line(paragraph) for paragraph in document.paragraphs)
     return [Document(text, str(path), None)]
+
+
+def _docx_line(paragraph: Paragraph) -> str:
+    """Return a paragraph as a line, with ``Heading N`` styles written as ``#`` headings."""
+    style_name = paragraph.style.name if paragraph.style is not None else None
+    style = style_name or ""
+    if style.startswith("Heading ") and style.removeprefix("Heading ").isdigit():
+        level = int(style.removeprefix("Heading "))
+        return f"{'#' * level} {paragraph.text}"
+    return paragraph.text

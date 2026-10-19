@@ -47,7 +47,7 @@ def test_loads_docx_text_in_paragraph_order() -> None:
 
     assert len(documents) == 1
     assert documents[0].text == (
-        "Leave Policy\nStaff may take parental leave for up to twelve weeks.\n"
+        "# Leave Policy\nStaff may take parental leave for up to twelve weeks.\n"
         "Requests go to the people team."
     )
     assert documents[0].page is None

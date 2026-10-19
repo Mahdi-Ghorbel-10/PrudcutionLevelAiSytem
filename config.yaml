@@ -1,2 +1,8 @@
 # Tunables shared by every environment. Secrets and environment-specific values go in .env.
 llm_timeout_seconds: 30
+
+ingestion:
+  chunk_size_chars: 800
+  chunk_overlap_chars: 100
+  # Prepend the heading path to the text that is embedded. B7 compares true and false.
+  embed_with_heading: true

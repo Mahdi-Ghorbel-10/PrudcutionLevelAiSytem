@@ -10,14 +10,29 @@ Both are validated when loaded, so a missing required value stops the app at sta
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class IngestionTunables(BaseModel):
+    """The ``ingestion`` section of ``config.yaml``."""
+
+    chunk_size_chars: int = Field(gt=0)
+    chunk_overlap_chars: int = Field(ge=0)
+    embed_with_heading: bool
+
+    @model_validator(mode="after")
+    def _overlap_is_smaller_than_chunk(self) -> "IngestionTunables":
+        if self.chunk_overlap_chars >= self.chunk_size_chars:
+            raise ValueError("chunk_overlap_chars must be smaller than chunk_size_chars")
+        return self
 
 
 class Tunables(BaseModel):
     """Values from ``config.yaml``."""
 
     llm_timeout_seconds: float = Field(gt=0)
+    ingestion: IngestionTunables
 
 
 class Settings(BaseSettings):
