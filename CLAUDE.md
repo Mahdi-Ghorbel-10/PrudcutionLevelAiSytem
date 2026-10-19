@@ -18,11 +18,11 @@ Claude Code is the builder, Zed is the reviewer, and the user merges. Each agent
 
 Rules for every agent:
 - Read `COLLABORATION.md` and run `git status` in your worktree before editing anything.
-- Build a step only from its approved spec in `specs/`. One commit per substep. Claim a build step (status `doing`) on the board before editing its files. Don't edit files of a step another agent is reviewing or building.
+- Build a step only from its approved spec, read from `origin/Dev` (`specs/Bx-<name>.md`). One commit per substep. Pushing the step branch sets the step to `doing` on the board, automatically. Don't edit files of a step another agent is reviewing or building.
 - Never revert or delete changes you didn't make. Files marked `open` on the board belong to the user.
 - Finish with a board update and a handoff note in `COLLABORATION.md`, listing files touched, commands run and results, and the next step.
 - Record any deviation from the plan in the Decisions log of `PLAN.md`. Don't change the design silently.
 - Commit and push on your own step branch. Never push to `Dev`, force-push, or merge a PR; the user merges.
 - Don't delete files or rewrite history unless the user asks in that conversation.
-- Tutor quizzes are created with `/quiz BN` after a merge. Only the `tutor` agent reads `quizzes/answers/`, and only to grade. Every other agent leaves that folder alone.
+- Tutor quizzes are created by the `tutor` agent after a merge, when the user starts it. Only the `tutor` agent reads `quizzes/answers/`, and only to grade. Every other agent leaves that folder alone.
 - After code changes, run `graphify update .`.

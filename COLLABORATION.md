@@ -1,9 +1,10 @@
 # Collaboration and status (read first, every session)
 
-Three roles, each with its own worktree:
-- **Claude Code** (id `claude-code`) is the **builder**. It implements every build step.
-- **Zed agent** (id `zed`) is the **reviewer**. It reviews PRs and makes small fixes only.
-- **The user** (`user`) merges PRs, answers open questions, creates release tags, and approves anything public (Docker Hub pushes, deploys). The user also commits quiz files and works with the **tutor** agent.
+Four roles, each in its own worktree or session:
+- **Orchestrator** (Claude Code in the `main/` checkout). It plans and coordinates: it drafts specs for the user to approve, keeps the board in line with GitHub, reads handoffs and reviews, and tells the user what's next. It doesn't write code in `rag-claude/` or `rag-zed/`, and it doesn't push to `Dev` without the user's OK.
+- **Claude Code** (id `claude-code`) is the **builder**, in `rag-claude/`. It implements each build step from its spec on `origin/Dev`.
+- **Zed agent** (id `zed`) is the **reviewer**, in `rag-zed/`. It reviews PRs and makes small fixes only, against the spec on `origin/Dev`.
+- **The user** (`user`) approves specs, merges PRs, creates release tags, and approves anything public (Docker Hub pushes, deploys). The user also commits quiz files, and works with the **tutor** agent, which creates and grades the quizzes.
 
 `CLAUDE.md` holds the working rules for every agent. This file holds the process, the board and the handoffs.
 
@@ -17,7 +18,7 @@ Three roles, each with its own worktree:
 
 ## Worktrees
 
-Each agent has its own worktree, so neither one edits the other's files. The user keeps the main checkout on `Dev`.
+Each agent has its own worktree, so neither one edits the other's files. The user keeps the main checkout on `Dev`, and the orchestrator works from there.
 
 ```
 rag-workspace/
@@ -37,7 +38,7 @@ A worktree can't check out `Dev` while the main checkout is on it, so both use `
 
 ## Start of every session (both agents)
 
-1. Fetch and read the process files from `Dev`: `git fetch origin`, then `git show origin/Dev:COLLABORATION.md` and `git show origin/Dev:PLAN.md`. Read the Board, the Status flow and your role's rules there. For a step, read its spec in `specs/` and nothing else from the specs folder. Don't rely on the copy in your worktree; it can be behind `Dev`.
+1. Fetch and read the process files from `Dev`: `git fetch origin`, then `git show origin/Dev:COLLABORATION.md` and `git show origin/Dev:PLAN.md`. Read the Board, the Status flow and your role's rules there. For a step, read its spec with `git show origin/Dev:specs/BN-<name>.md` and nothing else from the specs folder. Don't rely on the copy in your worktree; it can be behind `Dev`.
 2. Run `git status --short`, `git branch --show-current` and `git log --oneline -5` in your worktree. If the step branch has `handoffs/BN.md`, read it.
 3. Check the board against `gh pr list --state all`. If they disagree, GitHub wins: correct the board.
 4. Act only on a step whose status gives you the turn. Anything modified that you didn't do and that no handoff explains belongs to someone else. Don't revert it; ask the user.
@@ -45,10 +46,11 @@ A worktree can't check out `Dev` while the main checkout is on it, so both use `
 ## Specs (one file per step)
 
 - Each step has one spec: `specs/Bx-<name>.md`, copied from `specs/_template.md`. The board's Notes column links to it.
+- Specs live on `Dev`. The orchestrator drafts them in the `main/` checkout, and the builder and reviewer read them from `origin/Dev`. A spec reaches `Dev` when the user approves it and the orchestrator commits it, with the user's OK.
 - Spec status moves `draft` → `approved` → `building` → `review` → `done`. The builder writes no code until the spec is `approved`.
 - The user approves a spec by ticking its **Decisions needing approval**. Anything not in the decisions list can be settled by the builder, as long as it fits the spec.
 - Each substep is one commit. Tick its box only when its done-check passes, and put the result in the handoff.
-- To change a spec after approval, the builder edits the spec first and adds a Change log line. Design-level changes need the user's OK, and go in the Decisions log of `PLAN.md` too.
+- To change a spec after approval, the orchestrator edits it on `Dev` with the user's OK and adds a Change log line. The builder asks for a change in its handoff, not by editing the spec. Design-level changes go in the Decisions log of `PLAN.md` too.
 - The reviewer checks the code against the spec's substeps and "Done when". The tutor uses the spec and the merged code for the quiz.
 
 ## Status and review
@@ -111,7 +113,7 @@ Rules:
 
 1. Merge the PR (squash). Delete the step branch.
 2. The workflow sets the step to `merged` and pushes it to `Dev`. Check that it ran (`gh run list --workflow=board-sync.yml`). If it didn't, run it by hand from the Actions tab with the step ID and `status=merged`.
-3. Run `/quiz BN` in the main checkout. The tutor writes the quiz files. Don't set `quiz_ready` yourself.
+3. Start the tutor (`claude --agent tutor`) and ask it for the quiz for BN. The tutor writes the quiz files. The orchestrator reminds you to do this after each merge. Don't set `quiz_ready` yourself.
 4. Commit the quiz files to `Dev`. The workflow sets `quiz_ready` to `true` when they land.
 5. Start a tutor session with `claude --agent tutor` when you want to answer the quiz.
 
@@ -133,7 +135,7 @@ Rules:
 | Step | Task | Status | Builder | Reviewer | PR | quiz_ready | Notes |
 |---|---|---|---|---|---|---|---|
 | B1 | Scaffolding: pyproject, config, pre-commit, `scripts/export_model.sh`, `llm` image + Phoenix in compose, `ci.yml` with lint and unit tests | merged | claude-code | zed | #1 | true | Spec: `specs/B1-scaffolding.md` (approved 2026-10-18). CI green on PR #1. |
-| B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | todo | — | — | — | false |  |
+| B2 | Ingestion + Chroma + BM25, `rag ingest data/raw` | spec | — | — | — | false | Spec approved 2026-10-19 (D1 to D7). Builder: push b2-ingestion to start, which sets doing. |
 | B3 | Hybrid retrieval, RRF, reranker, unit tests | todo | — | — | — | false |  |
 | B4 | LangGraph agent + guardrails, `rag ask`. Includes the `pipeline: vanilla \| agent` flag. | todo | — | — | — | false |  |
 | B5 | Phoenix tracing | todo | — | — | — | false |  |
@@ -165,6 +167,7 @@ One file per step: `handoffs/BN.md`, written by the builder on the step branch a
 - 2026-10-18: Only the user creates release tags, on `Dev`.
 - 2026-10-18: Board statuses are `todo`, `spec`, `doing`, `review`, `merged`, `blocked`. `review` is derived from the PR. `quiz_ready` is a separate column, set to `true` by `/quiz`.
 - 2026-10-18: Spec-driven steps. One spec per step in `specs/`. The builder codes only from an approved spec. One commit per substep. Tutor reads the spec, not the plan.
+- 2026-10-19: Four roles. The orchestrator (Claude Code in `main/`) plans and coordinates, and does not push to `Dev` without the user's OK. The builder (`rag-claude/`) and the reviewer (`rag-zed/`) read specs from `origin/Dev`. The tutor agent creates and grades the quizzes, when the user starts it after a merge.
 - 2026-10-19: The board is updated by `board-sync.yml` from GitHub events (rules in `scripts/board_sync.py`). `doing`, `review`, `merged` and `quiz_ready` are automatic. `spec` and `blocked` are set by hand with `workflow_dispatch`. The Reviewer comes from a `reviewer:` label, default `zed`. Review results go to Notes.
 - 2026-10-19: Agents read `COLLABORATION.md` and `PLAN.md` from `Dev`, not from their worktree copy. Each step's handoff is `handoffs/BN.md` on its step branch, merged with the PR. No shared handoff section.
 
