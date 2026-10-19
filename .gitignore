@@ -4,3 +4,5 @@ data/raw/
 *.gguf
 __pycache__/
 .env
+CLAUDE.local.md
+.claude/settings.local.json
